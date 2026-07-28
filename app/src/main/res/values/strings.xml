@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">שומר אפליקציות</string>
+    <string name="device_admin_description">מנהל המכשיר מונע הסרת האפליקציה בלי קוד ניהול. כדי להסיר – היכנס לאפליקציה עם הקוד ושחרר את הנעילה.</string>
+    <string name="accessibility_service_description">שירות זה עוקב אחרי פתיחת אפליקציות וחוסם יישומים שאינם ברשימה המותרת, וגם מונע מסכי התקנה כשחסימת התקנות פעילה.</string>
+
+    <string name="pin_title">קוד ניהול</string>
+    <string name="pin_setup_title">הגדרת קוד ניהול</string>
+    <string name="pin_setup_hint">בחר קוד בן 4–8 ספרות</string>
+    <string name="pin_confirm_hint">אשר את הקוד</string>
+    <string name="pin_enter_hint">הזן קוד ניהול</string>
+    <string name="pin_continue">המשך</string>
+    <string name="pin_unlock">כניסה</string>
+    <string name="pin_mismatch">הקודים לא תואמים</string>
+    <string name="pin_wrong">קוד שגוי</string>
+    <string name="pin_too_short">הקוד חייב להיות לפחות 4 ספרות</string>
+
+    <string name="main_title">שומר אפליקציות</string>
+    <string name="protection_status">סטטוס הגנה</string>
+    <string name="level1_title">רמה 1 – רשימה מותרת</string>
+    <string name="level1_desc">חוסם פתיחת אפליקציות שלא ברשימה</string>
+    <string name="level2_title">רמה 2 – חסימת התקנות</string>
+    <string name="level2_desc">מונע התקנת אפליקציות חדשות</string>
+    <string name="manage_allowlist">ניהול רשימה מותרת</string>
+    <string name="settings">הגדרות</string>
+    <string name="enable_device_admin">הפעל הגנת הסרה</string>
+    <string name="enable_accessibility">הפעל מעקב אפליקציות</string>
+    <string name="device_admin_on">הגנת הסרה פעילה</string>
+    <string name="device_admin_off">הגנת הסרה כבויה</string>
+    <string name="accessibility_on">מעקב אפליקציות פעיל</string>
+    <string name="accessibility_off">מעקב אפליקציות כבוי</string>
+    <string name="required_permissions">הרשאות נדרשות</string>
+
+    <string name="settings_title">הגדרות</string>
+    <string name="change_pin">שינוי קוד ניהול</string>
+    <string name="current_pin">קוד נוכחי</string>
+    <string name="new_pin">קוד חדש</string>
+    <string name="confirm_new_pin">אישור קוד חדש</string>
+    <string name="save_pin">שמור קוד</string>
+    <string name="pin_changed">הקוד עודכן</string>
+    <string name="unlock_uninstall_title">שחרור נעילת הסרה</string>
+    <string name="unlock_uninstall_desc">לאחר השחרור אפשר לבטל מנהל מכשיר ולהסיר את האפליקציה. ההגנה תיכבה.</string>
+    <string name="unlock_uninstall">שחרר נעילת הסרה</string>
+    <string name="unlock_confirm_title">שחרור נעילה</string>
+    <string name="unlock_confirm_message">להסיר את הגנת ההסרה? אחרי זה אפשר יהיה להסיר את האפליקציה מהטלפון.</string>
+    <string name="confirm">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="uninstall_unlocked">נעילת ההסרה שוחררה. אפשר להסיר את האפליקציה מהגדרות המכשיר.</string>
+    <string name="admin_still_needed">יש לאשר ביטול מנהל המכשיר במסך שנפתח.</string>
+    <string name="cannot_uninstall_title">לא ניתן להסיר</string>
+    <string name="cannot_uninstall_message">אי אפשר להסיר את האפליקציה בלי לשחרר קודם את הנעילה. פתח את \"שומר אפליקציות\", הזן את קוד הניהול, ובחר \"שחרר נעילת הסרה\".</string>
+
+    <string name="allowlist_title">רשימה מותרת</string>
+    <string name="allowlist_hint">סמן אפליקציות שמותר לפתוח. המערכת והשומר תמיד מותרים.</string>
+    <string name="search_apps">חיפוש אפליקציה…</string>
+    <string name="save">שמור</string>
+    <string name="saved">נשמר</string>
+
+    <string name="blocked_title">האפליקציה חסומה</string>
+    <string name="blocked_message">האפליקציה \"%1$s\" לא ברשימה המותרת.</string>
+    <string name="blocked_install_title">התקנה חסומה</string>
+    <string name="blocked_install_message">התקנת אפליקציות חדשות חסומה על ידי שומר האפליקציות.</string>
+    <string name="go_home">חזרה למסך הבית</string>
+
+    <string name="toggle_on">פועל</string>
+    <string name="toggle_off">כבוי</string>
+    <string name="protection_active">ההגנה פעילה</string>
+    <string name="new_app_blocked_toast">התקנת אפליקציה חדשה נחסמה / זוהתה. יש להסיר אותה אם הותקנה.</string>
+</resources>
