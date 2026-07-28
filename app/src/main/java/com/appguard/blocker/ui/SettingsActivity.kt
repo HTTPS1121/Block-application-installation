@@ -8,6 +8,8 @@ import com.appguard.blocker.R
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.databinding.ActivitySettingsBinding
+import com.appguard.blocker.service.BlockCoordinator
+import com.appguard.blocker.service.UsageMonitorService
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -61,13 +63,14 @@ class SettingsActivity : AppCompatActivity() {
         prefs.uninstallUnlocked = true
         prefs.allowlistEnabled = false
         prefs.installBlockEnabled = false
+        prefs.setupCompleted = false
         DeviceAdminHelper.applyInstallRestriction(this, false)
+        BlockCoordinator.dismissOverlay(this)
+        UsageMonitorService.stop(this)
 
         if (DeviceAdminHelper.isAdminActive(this)) {
             DeviceAdminHelper.removeAdmin(this)
-            Toast.makeText(this, R.string.uninstall_unlocked, Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(this, R.string.uninstall_unlocked, Toast.LENGTH_LONG).show()
         }
+        Toast.makeText(this, R.string.uninstall_unlocked, Toast.LENGTH_LONG).show()
     }
 }

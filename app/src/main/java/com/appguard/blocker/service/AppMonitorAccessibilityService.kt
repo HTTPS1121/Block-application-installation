@@ -1,11 +1,9 @@
 package com.appguard.blocker.service
 
 import android.accessibilityservice.AccessibilityService
-import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.appguard.blocker.data.PrefsRepository
-import com.appguard.blocker.ui.BlockedActivity
 
 class AppMonitorAccessibilityService : AccessibilityService() {
 
@@ -17,6 +15,7 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         prefs = PrefsRepository(this)
         instance = this
+        UsageMonitorService.start(this)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -26,19 +25,25 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         val packageName = event.packageName?.toString() ?: return
         if (packageName == applicationContext.packageName) return
 
-        // Level 2: block install UI flows
         if (prefs.installBlockEnabled && isInstallFlow(event, packageName)) {
-            blockInstall(packageName)
+            if (!shouldThrottle(packageName)) return
+            // Close current UI aggressively then overlay
+            performGlobalAction(GLOBAL_ACTION_HOME)
+            BlockCoordinator.blockInstall(this, packageName)
             return
         }
 
-        // Level 1: allowlist gate
         if (!prefs.allowlistEnabled) return
-        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        if (prefs.isPackageAllowed(packageName)) return
-        if (isLauncherOrSystemUi(packageName)) return
+        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            event.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+        ) return
 
-        blockApp(packageName)
+        if (!BlockCoordinator.shouldBlockApp(this, packageName)) return
+        if (!shouldThrottle(packageName)) return
+
+        performGlobalAction(GLOBAL_ACTION_BACK)
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        BlockCoordinator.blockApp(this, packageName)
     }
 
     private fun isInstallFlow(event: AccessibilityEvent, packageName: String): Boolean {
@@ -64,46 +69,16 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         node.text?.let { out.add(it.toString()) }
         node.contentDescription?.let { out.add(it.toString()) }
         for (i in 0 until node.childCount) {
-            node.getChild(i)?.let { child ->
-                collectTexts(child, out)
-            }
+            node.getChild(i)?.let { child -> collectTexts(child, out) }
         }
-    }
-
-    private fun blockInstall(packageName: String) {
-        if (shouldThrottle(packageName)) return
-        performGlobalAction(GLOBAL_ACTION_HOME)
-        val intent = Intent(this, BlockedActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra(BlockedActivity.EXTRA_MODE, BlockedActivity.MODE_INSTALL)
-            putExtra(BlockedActivity.EXTRA_PACKAGE, packageName)
-        }
-        startActivity(intent)
-    }
-
-    private fun blockApp(packageName: String) {
-        if (shouldThrottle(packageName)) return
-        performGlobalAction(GLOBAL_ACTION_HOME)
-        val intent = Intent(this, BlockedActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra(BlockedActivity.EXTRA_MODE, BlockedActivity.MODE_APP)
-            putExtra(BlockedActivity.EXTRA_PACKAGE, packageName)
-        }
-        startActivity(intent)
     }
 
     private fun shouldThrottle(packageName: String): Boolean {
         val now = System.currentTimeMillis()
-        if (packageName == lastBlockedPackage && now - lastBlockAt < 1200) return true
+        if (packageName == lastBlockedPackage && now - lastBlockAt < 1000) return false
         lastBlockedPackage = packageName
         lastBlockAt = now
-        return false
-    }
-
-    private fun isLauncherOrSystemUi(packageName: String): Boolean {
-        return packageName == "com.android.systemui" ||
-            packageName.contains("launcher", ignoreCase = true) ||
-            packageName.contains("home", ignoreCase = true)
+        return true
     }
 
     override fun onInterrupt() = Unit
