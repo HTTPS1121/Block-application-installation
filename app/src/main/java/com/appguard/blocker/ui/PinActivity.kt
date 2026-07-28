@@ -59,7 +59,14 @@ class PinActivity : AppCompatActivity() {
     }
 
     private fun openMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        val next = if (!prefs.setupCompleted ||
+            !com.appguard.blocker.util.PermissionHelper.criticalReady(this)
+        ) {
+            Intent(this, SetupActivity::class.java)
+        } else {
+            Intent(this, MainActivity::class.java)
+        }
+        startActivity(next)
         finish()
     }
 }

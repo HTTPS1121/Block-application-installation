@@ -2,13 +2,14 @@ package com.appguard.blocker.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.appguard.blocker.R
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.databinding.ActivityMainBinding
-import com.appguard.blocker.service.AppMonitorAccessibilityService
+import com.appguard.blocker.service.UsageMonitorService
+import com.appguard.blocker.util.PermissionHelper
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,13 +22,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         prefs = PrefsRepository(this)
 
-        binding.btnDeviceAdmin.setOnClickListener {
-            if (!DeviceAdminHelper.isAdminActive(this)) {
-                DeviceAdminHelper.requestEnable(this)
-            }
-        }
-        binding.btnAccessibility.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        binding.btnSetupPermissions.setOnClickListener {
+            startActivity(Intent(this, SetupActivity::class.java))
         }
         binding.btnAllowlist.setOnClickListener {
             startActivity(Intent(this, AllowlistActivity::class.java))
@@ -37,45 +33,56 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.switchAllowlist.setOnCheckedChangeListener { _, checked ->
+            if (checked && !PermissionHelper.criticalReady(this)) {
+                binding.switchAllowlist.isChecked = false
+                Toast.makeText(this, R.string.setup_incomplete, Toast.LENGTH_LONG).show()
+                startActivity(Intent(this, SetupActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             prefs.allowlistEnabled = checked
+            if (checked) UsageMonitorService.start(this) else maybeStopMonitor()
         }
         binding.switchInstallBlock.setOnCheckedChangeListener { _, checked ->
+            if (checked && !PermissionHelper.criticalReady(this)) {
+                binding.switchInstallBlock.isChecked = false
+                Toast.makeText(this, R.string.setup_incomplete, Toast.LENGTH_LONG).show()
+                startActivity(Intent(this, SetupActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             prefs.installBlockEnabled = checked
             DeviceAdminHelper.applyInstallRestriction(this, checked)
+            if (checked) UsageMonitorService.start(this) else maybeStopMonitor()
         }
     }
 
     override fun onResume() {
         super.onResume()
         refreshStatus()
+        if ((prefs.allowlistEnabled || prefs.installBlockEnabled) &&
+            PermissionHelper.usageAccessGranted(this)
+        ) {
+            UsageMonitorService.start(this)
+        }
+    }
+
+    private fun maybeStopMonitor() {
+        if (!prefs.allowlistEnabled && !prefs.installBlockEnabled) {
+            UsageMonitorService.stop(this)
+        }
     }
 
     private fun refreshStatus() {
-        val adminOn = DeviceAdminHelper.isAdminActive(this)
-        binding.btnDeviceAdmin.text = if (adminOn) {
-            getString(R.string.device_admin_on)
+        val ready = PermissionHelper.criticalReady(this)
+        binding.permissionsSummary.text = if (ready) {
+            getString(R.string.permissions_ready)
         } else {
-            getString(R.string.enable_device_admin)
+            getString(R.string.permissions_missing)
         }
-        binding.btnDeviceAdmin.isEnabled = !adminOn
-
-        val a11yOn = AppMonitorAccessibilityService.isRunning() || isAccessibilityEnabled()
-        binding.btnAccessibility.text = if (a11yOn) {
-            getString(R.string.accessibility_on)
-        } else {
-            getString(R.string.enable_accessibility)
-        }
+        binding.permissionsSummary.setTextColor(
+            getColor(if (ready) R.color.accent else R.color.danger)
+        )
 
         binding.switchAllowlist.isChecked = prefs.allowlistEnabled
         binding.switchInstallBlock.isChecked = prefs.installBlockEnabled
-    }
-
-    private fun isAccessibilityEnabled(): Boolean {
-        val enabled = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val expected = "$packageName/${AppMonitorAccessibilityService::class.java.canonicalName}"
-        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
     }
 }

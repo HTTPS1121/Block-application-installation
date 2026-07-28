@@ -19,17 +19,44 @@
     <string name="protection_status">סטטוס הגנה</string>
     <string name="level1_title">רמה 1 – רשימה מותרת</string>
     <string name="level1_desc">חוסם פתיחת אפליקציות שלא ברשימה</string>
-    <string name="level2_title">רמה 2 – חסימת התקנות</string>
-    <string name="level2_desc">מונע התקנת אפליקציות חדשות</string>
+    <string name="level2_title">רמה 2 – חסימת התקנות / אפליקציות חדשות</string>
+    <string name="level2_desc">חוסם מסכי התקנה ושימוש באפליקציות חדשות מיד אחרי התקנה</string>
     <string name="manage_allowlist">ניהול רשימה מותרת</string>
     <string name="settings">הגדרות</string>
-    <string name="enable_device_admin">הפעל הגנת הסרה</string>
-    <string name="enable_accessibility">הפעל מעקב אפליקציות</string>
-    <string name="device_admin_on">הגנת הסרה פעילה</string>
-    <string name="device_admin_off">הגנת הסרה כבויה</string>
-    <string name="accessibility_on">מעקב אפליקציות פעיל</string>
-    <string name="accessibility_off">מעקב אפליקציות כבוי</string>
     <string name="required_permissions">הרשאות נדרשות</string>
+    <string name="open_setup">הגדרת הרשאות הגנה</string>
+    <string name="permissions_ready">כל ההרשאות הקריטיות פעילות</string>
+    <string name="permissions_missing">חסרות הרשאות – ההגנה לא מלאה</string>
+
+    <string name="setup_title">הגדרת הגנה</string>
+    <string name="setup_subtitle">כדי להגיע לרמת הגנה דומה ל־Safe Kids (בלי Device Owner), יש לאשר את כל ההרשאות הבאות.</string>
+    <string name="setup_progress">הושלמו %1$d מתוך %2$d הרשאות קריטיות</string>
+    <string name="setup_enable">הפעל</string>
+    <string name="setup_done">פעיל</string>
+    <string name="setup_open_oem">פתח הגדרות יצרן</string>
+    <string name="setup_continue">סיום והמשך</string>
+    <string name="setup_incomplete">יש להפעיל את כל ההרשאות הקריטיות לפני המשך.</string>
+
+    <string name="perm_accessibility_title">שירות נגישות</string>
+    <string name="perm_accessibility_desc">מזהה איזו אפליקציה נפתחה, סוגר אותה ומציג חסימה.</string>
+    <string name="perm_usage_title">גישה לנתוני שימוש</string>
+    <string name="perm_usage_desc">יודע איזו אפליקציה בחזית גם בלי אירוע נגישות.</string>
+    <string name="perm_admin_title">מנהל המכשיר</string>
+    <string name="perm_admin_desc">מקשה על הסרת האפליקציה ומאפשר פעולות ניהול.</string>
+    <string name="perm_overlay_title">הצגה מעל אפליקציות</string>
+    <string name="perm_overlay_desc">מציג מסך חסימה מיד מעל אפליקציה אסורה.</string>
+    <string name="perm_battery_title">התעלמות מאופטימיזציית סוללה</string>
+    <string name="perm_battery_desc">מונע מאנדרואיד לעצור את שירות המעקב ברקע.</string>
+    <string name="perm_notifications_title">התראות</string>
+    <string name="perm_notifications_desc">נדרש להצגת התראת שירות הרקע.</string>
+    <string name="perm_oem_title">הפעלה אוטומטית / רקע (יצרן)</string>
+    <string name="perm_oem_desc">בחלק מהמכשירים צריך לאפשר Auto-start ידנית בהגדרות היצרן.</string>
+    <string name="perm_oem_unavailable">לא נמצא מסך יצרן – בדוק בהגדרות האפליקציה / סוללה.</string>
+
+    <string name="monitor_channel_name">ניטור הגנה</string>
+    <string name="monitor_channel_desc">שומר על שירות המעקב פעיל ברקע</string>
+    <string name="monitor_notification_title">שומר אפליקציות פעיל</string>
+    <string name="monitor_notification_text">מעקב אחרי אפליקציות והתקנות רץ ברקע</string>
 
     <string name="settings_title">הגדרות</string>
     <string name="change_pin">שינוי קוד ניהול</string>
@@ -51,19 +78,20 @@
     <string name="cannot_uninstall_message">אי אפשר להסיר את האפליקציה בלי לשחרר קודם את הנעילה. פתח את \"שומר אפליקציות\", הזן את קוד הניהול, ובחר \"שחרר נעילת הסרה\".</string>
 
     <string name="allowlist_title">רשימה מותרת</string>
-    <string name="allowlist_hint">סמן אפליקציות שמותר לפתוח. המערכת והשומר תמיד מותרים.</string>
+    <string name="allowlist_hint">סמן אפליקציות שמותר לפתוח. המערכת והשומר תמיד מותרים. אפליקציה חדשה לא מתווספת אוטומטית.</string>
     <string name="search_apps">חיפוש אפליקציה…</string>
     <string name="save">שמור</string>
     <string name="saved">נשמר</string>
 
     <string name="blocked_title">האפליקציה חסומה</string>
     <string name="blocked_message">האפליקציה \"%1$s\" לא ברשימה המותרת.</string>
-    <string name="blocked_install_title">התקנה חסומה</string>
-    <string name="blocked_install_message">התקנת אפליקציות חדשות חסומה על ידי שומר האפליקציות.</string>
+    <string name="blocked_install_title">התקנה / אפליקציה חדשה חסומה</string>
+    <string name="blocked_install_message">זוהתה אפליקציה חדשה או ניסיון התקנה. השימוש חסום עד אישור מנהל ברשימה המותרת.</string>
     <string name="go_home">חזרה למסך הבית</string>
 
     <string name="toggle_on">פועל</string>
     <string name="toggle_off">כבוי</string>
     <string name="protection_active">ההגנה פעילה</string>
-    <string name="new_app_blocked_toast">התקנת אפליקציה חדשה נחסמה / זוהתה. יש להסיר אותה אם הותקנה.</string>
+    <string name="device_admin_on">הגנת הסרה פעילה</string>
+    <string name="new_app_blocked_toast">אפליקציה חדשה זוהתה ונחסמה. אפשר לאשר אותה רק דרך הרשימה המותרת עם קוד ניהול.</string>
 </resources>

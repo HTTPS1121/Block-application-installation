@@ -55,6 +55,26 @@ class PrefsRepository(context: Context) {
         return getAllowedPackages().contains(packageName)
     }
 
+    fun markRecentlyInstalled(packageName: String) {
+        val set = prefs.getStringSet(KEY_RECENT_INSTALLS, emptySet())?.toMutableSet() ?: mutableSetOf()
+        set.add(packageName)
+        prefs.edit().putStringSet(KEY_RECENT_INSTALLS, set).apply()
+    }
+
+    fun clearRecentlyInstalled(packageName: String) {
+        val set = prefs.getStringSet(KEY_RECENT_INSTALLS, emptySet())?.toMutableSet() ?: mutableSetOf()
+        if (set.remove(packageName)) {
+            prefs.edit().putStringSet(KEY_RECENT_INSTALLS, set).apply()
+        }
+    }
+
+    fun isRecentlyInstalled(packageName: String): Boolean =
+        prefs.getStringSet(KEY_RECENT_INSTALLS, emptySet())?.contains(packageName) == true
+
+    var setupCompleted: Boolean
+        get() = prefs.getBoolean(KEY_SETUP_COMPLETED, false)
+        set(value) = prefs.edit().putBoolean(KEY_SETUP_COMPLETED, value).apply()
+
     private fun hashPin(pin: String, salt: ByteArray): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(salt)
@@ -70,6 +90,8 @@ class PrefsRepository(context: Context) {
         private const val KEY_INSTALL_BLOCK_ENABLED = "install_block_enabled"
         private const val KEY_UNINSTALL_UNLOCKED = "uninstall_unlocked"
         private const val KEY_ALLOWED_PACKAGES = "allowed_packages"
+        private const val KEY_RECENT_INSTALLS = "recent_installs"
+        private const val KEY_SETUP_COMPLETED = "setup_completed"
 
         val ALWAYS_ALLOWED = setOf(
             "com.appguard.blocker",
