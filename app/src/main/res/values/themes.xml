@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AppGuard" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryContainer">@color/accent_dim</item>
+        <item name="colorOnPrimary">@color/bg</item>
+        <item name="colorSecondary">@color/warning</item>
+        <item name="colorError">@color/danger</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="materialButtonStyle">@style/Widget.AppGuard.Button</item>
+    </style>
+
+    <style name="Theme.AppGuard.Blocked" parent="Theme.AppGuard">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="Widget.AppGuard.Button" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="android:textColor">@color/bg</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Widget.AppGuard.Button.Danger" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/danger</item>
+        <item name="android:textColor">@color/bg</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Widget.AppGuard.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/stroke</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Text.Brand" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="Text.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
