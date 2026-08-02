@@ -162,31 +162,46 @@ object TamperDetectors {
     ): Boolean {
         if (root == null) return false
         val pkg = eventPackage.lowercase()
+        val rootPkg = root.packageName?.toString().orEmpty().lowercase()
         val className = eventClass.lowercase()
         if (className.contains("grantpermissions")) return false
 
-        // Package installer uninstall of us — solid
-        if (pkg.contains("packageinstaller") || PrefsRepository.isPackageInstaller(eventPackage)) {
-            return hasExactAppTitle(root, appLabel(context)) ||
-                hasExactAppTitle(root, PrefsRepository.OUR_LABEL) ||
-                nodeWithExactText(root, PrefsRepository.OUR_PACKAGE)
+        // After Cancel on uninstall, event may still say packageinstaller while
+        // rootInActiveWindow is already Launcher — which ALWAYS contains our icon label.
+        // Never treat that as "uninstalling us".
+        if (isLauncher(rootPkg) || rootPkg == "com.android.systemui") {
+            if (!(isLauncher(pkg) || pkg == "com.android.systemui")) return false
+            if (!isUninstallConfirmDialog(className, root)) return false
+            return isOurUninstallSubject(root, context)
         }
 
-        // Launcher / SystemUI: home screen ALWAYS has our icon label in the tree.
-        // Long-press menus on OTHER apps must NOT match. Only a real confirm dialog.
-        if (isLauncher(pkg) || pkg == "com.android.systemui") {
-            if (!isUninstallConfirmDialog(className, root)) return false
-            return hasExactAppTitle(root, appLabel(context)) ||
-                hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
+        // Package installer: root must still be installer + confirm chrome + we are the subject
+        if (pkg.contains("packageinstaller") || PrefsRepository.isPackageInstaller(eventPackage)) {
+            if (!isPackageInstallerPackage(rootPkg)) return false
+            if (!isOurUninstallSubject(root, context)) return false
+            return hasUninstallConfirm(root, className) ||
+                className.contains("uninstall") ||
+                nodeWithText(root, "להסיר את האפליקציה") ||
+                nodeWithText(root, "Do you want to uninstall")
         }
 
         if (isSettings(pkg)) {
-            if (!hasExactAppTitle(root, appLabel(context)) &&
-                !hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
-            ) return false
+            if (!isSettings(rootPkg) && rootPkg.isNotBlank()) return false
+            if (!isOurUninstallSubject(root, context)) return false
             return hasUninstallConfirm(root, className)
         }
         return false
+    }
+
+    /** True only if the uninstall/dialog subject is us — not merely our name on the home grid. */
+    private fun isOurUninstallSubject(root: AccessibilityNodeInfo, context: Context): Boolean =
+        hasExactAppTitle(root, appLabel(context)) ||
+            hasExactAppTitle(root, PrefsRepository.OUR_LABEL) ||
+            nodeWithExactText(root, PrefsRepository.OUR_PACKAGE)
+
+    fun isPackageInstallerPackage(pkg: String): Boolean {
+        val p = pkg.lowercase()
+        return PrefsRepository.isPackageInstaller(p) || p.contains("packageinstaller")
     }
 
     /** Real uninstall confirmation — not Pixel long-press shortcut bubble. */

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.util.Base64
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.concurrent.ConcurrentHashMap
 
 class PrefsRepository(context: Context) {
 
@@ -141,8 +142,40 @@ class PrefsRepository(context: Context) {
     }
 
     fun isPackageAllowed(packageName: String): Boolean {
-        if (isCoreExempt(packageName)) return true
+        if (isAlwaysOpen(packageName)) return true
         return getAllowedPackages().contains(packageName)
+    }
+
+    /**
+     * Always open — no allowlist needed:
+     * core exempt, Play Store, package installer, AND any OS system package
+     * ([ApplicationInfo.FLAG_SYSTEM] / [ApplicationInfo.FLAG_UPDATED_SYSTEM_APP]).
+     *
+     * Trade-off: preinstalled Pixel/OEM apps (Chrome, Phone, …) cannot be blocked.
+     * User/Play installs without system flag still require allowlist.
+     */
+    fun isAlwaysOpen(packageName: String): Boolean {
+        if (packageName == appContext.packageName) return true
+        if (isCoreExempt(packageName)) return true
+        if (packageName == PLAY_STORE) return true
+        if (isPackageInstaller(packageName)) return true
+        return isOsSystemPackage(packageName)
+    }
+
+    fun isOsSystemPackage(packageName: String): Boolean {
+        systemFlagCache[packageName]?.let { return it }
+        val result = try {
+            val ai = appContext.packageManager.getApplicationInfo(packageName, 0)
+            (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                (ai.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+        } catch (_: PackageManager.NameNotFoundException) {
+            // Mid-uninstall / vanished process — never kick
+            true
+        } catch (_: Exception) {
+            false
+        }
+        systemFlagCache[packageName] = result
+        return result
     }
 
     fun markRecentlyInstalled(packageName: String) {
@@ -167,15 +200,13 @@ class PrefsRepository(context: Context) {
         getRecentlyInstalled().contains(packageName)
 
     /**
-     * Single rule: when protection is on, only allowlisted (+ core exempt) may open.
-     * No "pending new install" queue — a new app simply isn't on the list → blocked.
+     * When protection is on: block only non-system packages missing from allowlist.
+     * OS system apps/processes are always open. Self-protect still gates OUR uninstall.
      */
     fun shouldBlockPackage(packageName: String): Boolean {
-        if (packageName == appContext.packageName) return false
-        if (isCoreExempt(packageName)) return false
-        if (packageName == PLAY_STORE) return false
+        if (isAlwaysOpen(packageName)) return false
         if (!allowlistEnabled) return false
-        return !isPackageAllowed(packageName)
+        return !getAllowedPackages().contains(packageName)
     }
 
     fun protectionActive(): Boolean = allowlistEnabled
@@ -217,10 +248,8 @@ class PrefsRepository(context: Context) {
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .filter { app ->
                 val pkg = app.packageName
-                if (pkg == appContext.packageName) return@filter false
-                if (isCoreExempt(pkg)) return@filter false
-                if (isPackageInstaller(pkg) || pkg == PLAY_STORE) return@filter false
-                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
+                if (isAlwaysOpen(pkg)) return@filter false
+                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
                     pm.getLaunchIntentForPackage(pkg) != null
             }
             .map { it.packageName to pm.getApplicationLabel(it).toString() }
@@ -347,6 +376,13 @@ class PrefsRepository(context: Context) {
             if (packageName.contains("packageinstaller", ignoreCase = true)) return true
             return false
         }
+
+        /** Invalidate after package install/remove so FLAG_SYSTEM cache stays honest. */
+        fun clearSystemFlagCache() {
+            systemFlagCache.clear()
+        }
+
+        private val systemFlagCache = ConcurrentHashMap<String, Boolean>()
 
         fun isInstallerPackage(packageName: String): Boolean =
             packageName == PLAY_STORE || isPackageInstaller(packageName)

@@ -13,6 +13,7 @@ import com.appguard.blocker.service.UsageMonitorService
 import com.appguard.blocker.ui.BlockedActivity
 import com.appguard.blocker.ui.ProtectionChallengeActivity
 import com.appguard.blocker.util.AuthSession
+import com.google.android.material.color.DynamicColors
 
 class AppGuardApplication : Application() {
 
@@ -21,6 +22,8 @@ class AppGuardApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Material You — wallpaper palette on API 31+ (same idea as ReVanced dynamic color)
+        DynamicColors.applyToActivitiesIfAvailable(this)
         AppAccessGuard.reset()
 
         runCatching {

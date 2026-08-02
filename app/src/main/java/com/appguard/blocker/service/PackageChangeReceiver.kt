@@ -20,10 +20,13 @@ class PackageChangeReceiver : BroadcastReceiver() {
         if (pkg == PrefsRepository.PLAY_STORE) return
 
         val prefs = PrefsRepository(context)
+        PrefsRepository.clearSystemFlagCache()
 
         when (action) {
             Intent.ACTION_PACKAGE_ADDED -> {
                 if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+                // System packages are always open — no toast / no allowlist noise
+                if (prefs.isAlwaysOpen(pkg)) return
 
                 // Ensure new package is not on allowlist
                 val allowed = prefs.getAllowedPackages()

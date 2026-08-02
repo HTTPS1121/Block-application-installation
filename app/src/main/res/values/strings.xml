@@ -107,8 +107,8 @@
     <string name="challenge_admin_warning">כדי לבטל מנהל מכשיר צריך קוד ניהול באפליקציה \"שומר אפליקציות\". בטל כאן רק אחרי אימות שם.</string>
 
     <string name="allowlist_title">רשימה מותרת</string>
-    <string name="allowlist_hint">סמן מה מותר. אשר = שומר. מה שלא מסומן — לא ייפתח. הגדרות/Launcher תמיד מותרים.</string>
-    <string name="allowlist_from_setup">סמן אפליקציות מותרות ולחץ אשר. רק הן ייפתחו.</string>
+    <string name="allowlist_hint">סמן אפליקציות משתמש שמותר לפתוח. אפליקציות ותהליכי מערכת תמיד פתוחים. מה שלא מסומן כאן — לא ייפתח.</string>
+    <string name="allowlist_from_setup">סמן אפליקציות משתמש מותרות ולחץ אשר. מערכת תמיד פתוחה; רק מה שתסמן מהרשימה ייפתח בנוסף.</string>
     <string name="search_apps">חיפוש אפליקציה…</string>
     <string name="select_all">בחר הכל</string>
     <string name="deselect_all">בטל הכל</string>
@@ -128,4 +128,17 @@
     <string name="protection_active">ההגנה פעילה</string>
     <string name="device_admin_on">הגנת הסרה פעילה</string>
     <string name="new_app_blocked_toast">אפליקציה חדשה אינה ברשימה המותרת — לא תיפתח עד שתסמן אותה.</string>
+
+    <string name="step_pin">קוד</string>
+    <string name="step_recovery">שחזור</string>
+    <string name="step_permissions">הרשאות</string>
+    <string name="step_allowlist">רשימה</string>
+    <string name="onboarding_caption">התקנה · שלב %1$d מתוך 4</string>
+    <string name="main_tagline">שליטה מלאה על מה שנפתח במכשיר</string>
+    <string name="main_status_caption">מצב מערכת</string>
+    <string name="main_actions_caption">פעולות</string>
+    <string name="setup_step_caption">הפעל כל הרשאה קריטית</string>
+    <string name="pin_step_caption">בחר קוד שיגן על ההגדרות</string>
+    <string name="recovery_step_caption">שמור גיבוי לפני שממשיכים</string>
+    <string name="allowlist_step_caption">בחר מה מותר — ואשר</string>
 </resources>
