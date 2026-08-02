@@ -9,6 +9,7 @@ import androidx.core.view.WindowCompat
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.databinding.ActivityProtectionChallengeBinding
+import com.appguard.blocker.protection.AppAccessGuard
 import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.protection.TamperReason
 import com.appguard.blocker.util.AuthSession
@@ -34,6 +35,7 @@ class ProtectionChallengeActivity : AppCompatActivity() {
         reason = parseReason(intent)
         prefs.challengeActive = true
         prefs.pendingTamperReason = reason.name
+        AppAccessGuard.onChallengeUiStarted()
 
         binding.challengeTitle.setText(titleFor(reason))
         binding.challengeMessage.setText(messageFor(reason))
@@ -47,12 +49,29 @@ class ProtectionChallengeActivity : AppCompatActivity() {
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        AppAccessGuard.onChallengeUiStarted()
+        prefs.challengeActive = true
+    }
+
+    override fun onStop() {
+        AppAccessGuard.onChallengeUiStopped()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        AppAccessGuard.onChallengeUiStopped()
+        super.onDestroy()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         reason = parseReason(intent)
         prefs.challengeActive = true
         prefs.pendingTamperReason = reason.name
+        AppAccessGuard.onChallengeUiStarted()
         binding.challengeTitle.setText(titleFor(reason))
         binding.challengeMessage.setText(messageFor(reason))
         binding.challengePin.text?.clear()

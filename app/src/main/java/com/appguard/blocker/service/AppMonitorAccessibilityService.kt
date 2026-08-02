@@ -13,6 +13,7 @@ import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.protection.TamperDetectors
 import com.appguard.blocker.protection.TamperReason
 import com.appguard.blocker.ui.BlockedActivity
+import com.appguard.blocker.util.ForeignStrings
 
 /**
  * Self-protect like Kaspersky:
@@ -39,8 +40,10 @@ class AppMonitorAccessibilityService : AccessibilityService() {
                     handler.postDelayed(this, 450)
                     return
                 }
-                // While PIN is up — never BACK (IME focus used to kill noHistory activity)
-                if (PrefsRepository(this@AppMonitorAccessibilityService).challengeActive) {
+                // While PIN challenge UI is up — never BACK into it
+                if (AppAccessGuard.isChallengeUiShowing() ||
+                    PrefsRepository(this@AppMonitorAccessibilityService).challengeActive
+                ) {
                     handler.postDelayed(this, 450)
                     return
                 }
@@ -155,17 +158,18 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             return
         }
 
-        if (selfProtect && type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+        if (selfProtect && (
+                type == AccessibilityEvent.TYPE_VIEW_CLICKED ||
+                    type == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED
+                )
+        ) {
             val root = rootInActiveWindow
             val className = event.className?.toString().orEmpty()
-            // Only the Uninstall/הסרה control on OUR App Info — page itself stays open
-            if (isOurUninstallButtonClick(event, packageName, root) ||
+            // Dangerous controls on OUR App Info: הסרה / סגירה ידנית / ארכיון / השבת
+            if (isOurDangerousAppInfoAction(event, packageName, root) ||
                 TamperDetectors.isOurUninstallUi(this, packageName, className, root)
             ) {
-                // Eat the action: BACK out of confirm / stay on App Info + PIN
-                clickCancelLikeButtons()
-                performGlobalAction(GLOBAL_ACTION_BACK)
-                hardKickTamper(TamperReason.UNINSTALL)
+                eatDangerousAppInfoAction()
                 return
             }
             if (isAdminDeactivateClick(event) ||
@@ -186,6 +190,16 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         ) return
 
         if (selfProtect) {
+            // Confirm dialogs after tapping Force stop / Uninstall on our App Info
+            if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+                type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+            ) {
+                val root = rootInActiveWindow
+                if (isOurDangerousConfirmDialog(packageName, root)) {
+                    eatDangerousAppInfoAction()
+                    return
+                }
+            }
             val threat = detectThreat(event, packageName)
             if (threat != null) {
                 when (threat) {
@@ -410,11 +424,17 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         ) != null
     }
 
+    private fun eatDangerousAppInfoAction() {
+        clickCancelLikeButtons()
+        performGlobalAction(GLOBAL_ACTION_BACK)
+        hardKickTamper(TamperReason.UNINSTALL)
+    }
+
     /**
-     * True only when user taps Uninstall/הסרה while viewing OUR App Info.
-     * Force-stop / archive / browsing App Info are allowed.
+     * הסרה / סגירה ידנית / ארכיון / השבת — only on OUR App Info page.
+     * Walks source + parents (Compose often puts label on a child, click on parent).
      */
-    private fun isOurUninstallButtonClick(
+    private fun isOurDangerousAppInfoAction(
         event: AccessibilityEvent,
         eventPackage: String,
         root: AccessibilityNodeInfo?
@@ -427,30 +447,85 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             !PrefsRepository.isPackageInstaller(eventPackage)
         ) return false
 
-        val parts = mutableListOf<String>()
-        event.text?.forEach { parts.add(it.toString()) }
-        event.contentDescription?.let { parts.add(it.toString()) }
+        val onOurPage =
+            TamperDetectors.isOurAppInfo(this, eventPackage, "", root) ||
+                TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) ||
+                TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
+        if (!onOurPage) return false
+
+        val labels = ForeignStrings.dangerousAppInfoActionLabels(this)
+            .map { it.trim().lowercase() }
+            .filter { it.isNotEmpty() }
+        if (labels.isEmpty()) return false
+
+        // Only the click target (+ 2 parents). Do NOT scan whole page (הסרה always visible).
+        val nodeTexts = mutableListOf<String>()
+        event.text?.forEach { nodeTexts.add(it.toString()) }
+        event.contentDescription?.let { nodeTexts.add(it.toString()) }
         runCatching {
-            event.source?.let { src ->
-                src.text?.let { parts.add(it.toString()) }
-                src.contentDescription?.let { parts.add(it.toString()) }
+            var node: AccessibilityNodeInfo? = event.source
+            var hops = 0
+            while (node != null && hops < 3) {
+                node.text?.let { nodeTexts.add(it.toString()) }
+                node.contentDescription?.let { nodeTexts.add(it.toString()) }
+                node = node.parent
+                hops++
             }
         }
-        val joined = parts.joinToString(" ").trim().lowercase()
-        if (joined.isEmpty()) return false
+        if (nodeTexts.isEmpty()) return false
 
-        // Delete/uninstall only — not force-stop / archive
-        val uninstallLabels = listOf(
-            "uninstall", "הסר", "הסרה", "הסר התקנה", "delete app", "delete", "מחק", "מחיקה"
-        )
-        val isUninstallLabel = uninstallLabels.any { label ->
-            joined == label || joined.startsWith("$label ") || joined.endsWith(" $label")
+        return nodeTexts.any { raw ->
+            val t = raw.trim().lowercase()
+            if (t.isEmpty()) return@any false
+            labels.any { label ->
+                t == label || t.startsWith("$label ") || t.endsWith(" $label")
+            }
         }
-        if (!isUninstallLabel) return false
+    }
 
-        // Page subject must be us
-        return TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) ||
-            TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
+    /** Force-stop / uninstall confirmation dialog while our App Info is the subject. */
+    private fun isOurDangerousConfirmDialog(
+        eventPackage: String,
+        root: AccessibilityNodeInfo?
+    ): Boolean {
+        if (root == null) return false
+        if (!TamperDetectors.isSettings(eventPackage) &&
+            !PrefsRepository.isPackageInstaller(eventPackage)
+        ) return false
+        if (!TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) &&
+            !TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
+        ) return false
+
+        val joined = buildString {
+            fun walk(n: AccessibilityNodeInfo, depth: Int) {
+                if (depth > 8 || length > 400) return
+                n.text?.let { append(it).append(' ') }
+                n.contentDescription?.let { append(it).append(' ') }
+                val c = n.childCount.coerceAtMost(25)
+                for (i in 0 until c) n.getChild(i)?.let { walk(it, depth + 1) }
+            }
+            walk(root, 0)
+        }.lowercase()
+
+        val looksConfirm =
+            joined.contains("force stop") || joined.contains("עצור בכוח") ||
+                joined.contains("סגירה ידנית") ||
+                joined.contains("uninstall") || joined.contains("הסר") ||
+                joined.contains("archive") || joined.contains("ארכיון") ||
+                joined.contains("disable app") || joined.contains("השבת")
+        if (!looksConfirm) return false
+
+        // Dialog chrome: OK / Force stop / Uninstall affirmative
+        return TamperDetectors.nodeWithExactText(root, "OK") ||
+            TamperDetectors.nodeWithExactText(root, "אישור") ||
+            TamperDetectors.nodeWithExactText(root, "Force stop") ||
+            TamperDetectors.nodeWithExactText(root, "עצור בכוח") ||
+            TamperDetectors.nodeWithExactText(root, "סגירה ידנית") ||
+            TamperDetectors.nodeWithExactText(root, "Uninstall") ||
+            TamperDetectors.nodeWithExactText(root, "הסרה") ||
+            TamperDetectors.nodeWithExactText(root, "הסר") ||
+            TamperDetectors.nodeWithText(root, "Force stop") ||
+            TamperDetectors.nodeWithText(root, "להסיר")
     }
 
     private fun mentionsOurApp(texts: List<String>, joined: String): Boolean {

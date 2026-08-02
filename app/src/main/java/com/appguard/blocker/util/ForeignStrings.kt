@@ -58,6 +58,24 @@ object ForeignStrings {
         return out.distinct().filter { it.isNotBlank() }
     }
 
+    /** Buttons that must not work on OUR App Info (removal / kill service). */
+    fun dangerousAppInfoActionLabels(context: Context): List<String> {
+        val out = mutableListOf<String>()
+        listOf(
+            "force_stop", "finish_application", "uninstall_text", "uninstall_application",
+            "archive", "disable_text", "app_disable_dlg_positive"
+        ).forEach { key -> settings(context, key)?.let { out.add(it) } }
+        out.addAll(
+            listOf(
+                "Uninstall", "הסר", "הסרה", "הסר התקנה", "delete app", "Delete", "מחק", "מחיקה",
+                "Force stop", "Force Stop", "עצור בכוח", "סגירה ידנית",
+                "Archive", "העברה לארכיון",
+                "Disable", "השבת", "Disable app"
+            )
+        )
+        return out.distinct().filter { it.isNotBlank() }
+    }
+
     fun adminMarkers(context: Context): List<String> {
         val out = mutableListOf<String>()
         listOf(
