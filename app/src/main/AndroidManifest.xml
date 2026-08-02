@@ -23,12 +23,13 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:taskAffinity=""
         android:theme="@style/Theme.AppGuard">
 
+        <!-- Own task affinity (default = package). Empty app-level affinity made first launch "flee" home. -->
         <activity
             android:name=".ui.PinActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="stateVisible|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

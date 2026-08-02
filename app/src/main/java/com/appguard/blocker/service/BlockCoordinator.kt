@@ -13,6 +13,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import com.appguard.blocker.R
+import com.appguard.blocker.protection.AppAccessGuard
 import com.appguard.blocker.ui.BlockedActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -38,6 +39,8 @@ object BlockCoordinator {
 
     fun blockApp(context: Context, packageName: String, mode: String = BlockedActivity.MODE_APP) {
         if (packageName == context.packageName) return
+        // User just opened / is inside guardian — never steal focus with HOME
+        if (AppAccessGuard.mustNotKickGuardian()) return
         val appContext = context.applicationContext
         val now = System.currentTimeMillis()
 

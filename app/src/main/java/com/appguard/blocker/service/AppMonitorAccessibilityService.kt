@@ -206,11 +206,13 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             }
         }
 
-        // Single mode: not on allowlist → kick. Package installer / sideload aren't allowlisted.
+        // Single mode: not on allowlist → kick. Never while guardian UI is opening/open.
         if (!prefs.allowlistEnabled) return
+        if (AppAccessGuard.mustNotKickGuardian()) return
         if (!BlockCoordinator.shouldBlockApp(this, packageName)) {
             // Still block packageinstaller UI when protection on (not an "allowed app")
             if (PrefsRepository.isPackageInstaller(packageName) && !eventMentionsUs(event)) {
+                if (AppAccessGuard.mustNotKickGuardian()) return
                 performGlobalAction(GLOBAL_ACTION_BACK)
                 performGlobalAction(GLOBAL_ACTION_HOME)
                 BlockCoordinator.blockApp(this, packageName)
