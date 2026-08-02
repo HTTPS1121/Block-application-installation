@@ -17,7 +17,7 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
-import com.appguard.blocker.ui.BlockedActivity
+import com.appguard.blocker.protection.AppAccessGuard
 import com.appguard.blocker.ui.MainActivity
 import com.appguard.blocker.util.PermissionHelper
 
@@ -61,6 +61,8 @@ class UsageMonitorService : Service() {
     private fun checkForeground() {
         if (!prefs.protectionActive()) return
         if (!PermissionHelper.usageAccessGranted(this)) return
+        // Opening PIN/Main: never HOME — UsageStats lags and still shows the previous app
+        if (AppAccessGuard.mustNotKickGuardian()) return
 
         val fg = queryForegroundPackage() ?: return
         // HARD RULE: never kick the guardian itself
@@ -84,14 +86,22 @@ class UsageMonitorService : Service() {
         val events = usm.queryEvents(begin, end)
         val event = UsageEvents.Event()
         var last: String? = null
+        var lastOur: String? = null
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val type = event.eventType
             val isFg = type == UsageEvents.Event.ACTIVITY_RESUMED || type == 1
             if (isFg) {
                 last = event.packageName
+                if (event.packageName == packageName ||
+                    event.packageName == PrefsRepository.OUR_PACKAGE
+                ) {
+                    lastOur = event.packageName
+                }
             }
         }
+        // Prefer guardian if it resumed in the window (even if another pkg is "last" by race)
+        if (lastOur != null && AppAccessGuard.isGuardianInForeground()) return lastOur
         return last
     }
 
