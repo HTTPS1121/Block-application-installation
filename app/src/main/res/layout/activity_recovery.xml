@@ -3,50 +3,59 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient"
-    android:clipToPadding="false"
     android:layoutDirection="rtl"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:padding="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_gravity="center"
+        android:orientation="vertical">
 
         <TextView
             style="@style/Text.Brand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/setup_title"
+            android:gravity="center"
+            android:text="@string/recovery_title"
             android:textSize="26sp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/setup_subtitle"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/recovery_hint"
             android:textColor="@color/text_secondary" />
 
         <TextView
-            android:id="@+id/setupProgress"
+            android:id="@+id/recoveryCode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_panel"
+            android:gravity="center"
+            android:letterSpacing="0.12"
+            android:padding="20dp"
             android:textColor="@color/accent"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:id="@+id/permissionList"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:orientation="vertical" />
+            android:gravity="center"
+            android:text="@string/recovery_screenshot"
+            android:textColor="@color/warning"
+            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnContinue"
+            android:id="@+id/btnConfirmShot"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="20dp"
-            android:text="@string/setup_continue" />
+            android:layout_marginTop="24dp"
+            android:text="@string/recovery_confirm" />
     </LinearLayout>
 </ScrollView>

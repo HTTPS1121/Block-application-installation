@@ -13,7 +13,6 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/brand"
             style="@style/Text.Brand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -21,52 +20,33 @@
             android:text="@string/app_name" />
 
         <TextView
-            android:id="@+id/pinTitle"
+            android:id="@+id/challengeTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
             android:gravity="center"
-            android:text="@string/pin_title"
+            android:text="@string/challenge_title"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/pinHint"
+            android:id="@+id/challengeMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/pin_enter_hint"
+            android:text="@string/challenge_message_uninstall"
             android:textColor="@color/text_secondary" />
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pinLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:hint="@string/pin_enter_hint">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pinInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberPassword"
-                android:maxLength="8"
-                android:textAlignment="center"
-                android:textSize="22sp" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pinConfirmLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/pin_confirm_hint"
-            android:visibility="gone">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pinConfirmInput"
+                android:id="@+id/challengePin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="numberPassword"
@@ -76,19 +56,18 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/pinSubmit"
+            android:id="@+id/challengeSubmit"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="20dp"
-            android:text="@string/pin_unlock" />
+            android:text="@string/challenge_continue" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnForgot"
+            android:id="@+id/challengeCancel"
             style="@style/Widget.AppGuard.Button.Outlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/recovery_forgot"
-            android:visibility="gone" />
+            android:text="@string/cancel" />
     </LinearLayout>
 </FrameLayout>

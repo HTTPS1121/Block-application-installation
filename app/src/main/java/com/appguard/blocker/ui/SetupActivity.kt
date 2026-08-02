@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.appguard.blocker.R
 import com.appguard.blocker.admin.DeviceAdminHelper
@@ -22,7 +21,9 @@ import com.appguard.blocker.util.OemAutostartHelper
 import com.appguard.blocker.util.PermissionHelper
 import com.appguard.blocker.util.PermissionItem
 
-class SetupActivity : AppCompatActivity() {
+class SetupActivity : SecureActivity() {
+    // During setup we leave to system Settings often — don't bounce to PIN
+    override val requireAuth: Boolean = false
 
     private lateinit var binding: ActivitySetupBinding
     private lateinit var prefs: PrefsRepository
@@ -38,26 +39,32 @@ class SetupActivity : AppCompatActivity() {
         setContentView(binding.root)
         prefs = PrefsRepository(this)
 
+        // Ensure self-protect is OFF while user grants permissions
+        prefs.protectionArmed = false
+
         binding.btnContinue.setOnClickListener {
-            if (PermissionHelper.criticalReady(this)) {
-                prefs.setupCompleted = true
-                UsageMonitorService.start(this)
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-            } else {
+            if (!PermissionHelper.criticalReady(this)) {
                 Toast.makeText(this, R.string.setup_incomplete, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
             }
+
+            prefs.setupCompleted = true
+            prefs.uninstallUnlocked = false
+            // Do NOT arm until allowlist is saved (אשר)
+            prefs.allowlistEnabled = false
+            prefs.protectionArmed = false
+
+            startActivity(
+                Intent(this, AllowlistActivity::class.java)
+                    .putExtra(AllowlistActivity.EXTRA_FROM_SETUP, true)
+            )
+            finish()
         }
     }
 
     override fun onResume() {
         super.onResume()
         refresh()
-        if (PermissionHelper.usageAccessGranted(this) &&
-            PermissionHelper.batteryOptimizationIgnored(this)
-        ) {
-            UsageMonitorService.start(this)
-        }
     }
 
     private fun refresh() {
