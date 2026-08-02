@@ -6,7 +6,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.widget.LinearLayout
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,6 +38,7 @@ class SetupActivity : SecureActivity() {
         binding = ActivitySetupBinding.inflate(layoutInflater)
         setContentView(binding.root)
         prefs = PrefsRepository(this)
+        OnboardingSteps.bind(binding.root, OnboardingSteps.PERMISSIONS)
 
         // Ensure self-protect is OFF while user grants permissions
         prefs.protectionArmed = false
@@ -78,6 +79,8 @@ class SetupActivity : SecureActivity() {
         ).count { item -> states.first { it.item == item }.granted }
 
         binding.setupProgress.text = getString(R.string.setup_progress, grantedCritical, 5)
+        binding.setupProgressBar.progress = grantedCritical
+        binding.setupProgressBar.max = 5
 
         binding.permissionList.removeAllViews()
         states.forEach { state ->
@@ -93,7 +96,7 @@ class SetupActivity : SecureActivity() {
         binding.btnContinue.alpha = if (binding.btnContinue.isEnabled) 1f else 0.55f
     }
 
-    private fun buildRow(item: PermissionItem, granted: Boolean): LinearLayout {
+    private fun buildRow(item: PermissionItem, granted: Boolean): View {
         val row = ItemPermissionBinding.inflate(LayoutInflater.from(this))
         val (title, desc) = when (item) {
             PermissionItem.ACCESSIBILITY ->

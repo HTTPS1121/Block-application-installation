@@ -27,6 +27,7 @@ class RecoveryActivity : AppCompatActivity() {
         val code = intent.getStringExtra(EXTRA_CODE)
             ?: prefs.generateAndStoreRecoveryCode()
 
+        OnboardingSteps.bind(binding.root, OnboardingSteps.RECOVERY)
         binding.recoveryCode.text = code
         binding.btnConfirmShot.setOnClickListener {
             prefs.recoveryShown = true

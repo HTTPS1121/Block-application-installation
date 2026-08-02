@@ -105,8 +105,15 @@ class MainActivity : SecureActivity() {
             getString(R.string.protection_inactive)
         }
         binding.protectionBadge.setTextColor(
-            getColor(if (active) R.color.accent else R.color.danger)
+            getColor(
+                if (active) R.color.md_theme_on_secondary_container
+                else R.color.md_theme_on_error_container
+            )
         )
+        binding.protectionBadge.setBackgroundResource(
+            if (active) R.drawable.bg_badge_on else R.drawable.bg_badge_off
+        )
+        binding.btnEnableBoth.visibility = if (active) View.GONE else View.VISIBLE
         refreshCounters()
     }
 

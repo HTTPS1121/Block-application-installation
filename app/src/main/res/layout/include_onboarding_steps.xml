@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/onboardingRail"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp"
+    android:background="@drawable/bg_search"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="10dp"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/step1"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_step_idle"
+            android:gravity="center"
+            android:text="1"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step1Label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/step_pin"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="-14dp"
+        android:layout_weight="0.25"
+        android:background="@color/md_theme_outline_variant" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/step2"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_step_idle"
+            android:gravity="center"
+            android:text="2"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step2Label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/step_recovery"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="-14dp"
+        android:layout_weight="0.25"
+        android:background="@color/md_theme_outline_variant" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/step3"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_step_idle"
+            android:gravity="center"
+            android:text="3"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step3Label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/step_permissions"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="-14dp"
+        android:layout_weight="0.25"
+        android:background="@color/md_theme_outline_variant" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/step4"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_step_idle"
+            android:gravity="center"
+            android:text="4"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/step4Label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/step_allowlist"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
+    </LinearLayout>
+</LinearLayout>

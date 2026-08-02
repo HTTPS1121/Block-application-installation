@@ -163,6 +163,9 @@ class AppMonitorAccessibilityService : AccessibilityService() {
                     type == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED
                 )
         ) {
+            // Cancel / No on uninstall dialog of ANY app — never PIN
+            if (isNegativeOrDismissClick(event)) return
+
             val root = rootInActiveWindow
             val className = event.className?.toString().orEmpty()
             // Dangerous controls on OUR App Info: הסרה / סגירה ידנית / ארכיון / השבת
@@ -192,10 +195,14 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         if (selfProtect) {
             // Confirm dialogs after tapping Force stop / Uninstall on our App Info
             if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
-                type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                type == AccessibilityEvent.TYPE_WINDOWS_CHANGED
             ) {
                 val root = rootInActiveWindow
-                if (isOurDangerousConfirmDialog(packageName, root)) {
+                // Dismiss race: installer event + launcher root must not PIN
+                if (isStaleInstallerEvent(packageName, root)) {
+                    // fall through — not our uninstall
+                } else if (isOurDangerousConfirmDialog(packageName, root)) {
                     eatDangerousAppInfoAction()
                     return
                 }
@@ -223,16 +230,9 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         // Single mode: not on allowlist → kick. Never while guardian UI is opening/open.
         if (!prefs.allowlistEnabled) return
         if (AppAccessGuard.mustNotKickGuardian()) return
-        if (!BlockCoordinator.shouldBlockApp(this, packageName)) {
-            // Still block packageinstaller UI when protection on (not an "allowed app")
-            if (PrefsRepository.isPackageInstaller(packageName) && !eventMentionsUs(event)) {
-                if (AppAccessGuard.mustNotKickGuardian()) return
-                performGlobalAction(GLOBAL_ACTION_BACK)
-                performGlobalAction(GLOBAL_ACTION_HOME)
-                BlockCoordinator.blockApp(this, packageName)
-            }
-            return
-        }
+        // Package installer is exempt from allowlist kicks (uninstall other apps must work).
+        // OUR uninstall is handled above by self-protect / isOurUninstallUi.
+        if (!BlockCoordinator.shouldBlockApp(this, packageName)) return
 
         val now = System.currentTimeMillis()
         if (packageName == lastAppBlockPkg && now - lastAppBlockAt < 250) return
@@ -447,11 +447,16 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             !PrefsRepository.isPackageInstaller(eventPackage)
         ) return false
 
-        val onOurPage =
-            TamperDetectors.isOurAppInfo(this, eventPackage, "", root) ||
-                TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) ||
-                TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
-        if (!onOurPage) return false
+        val rootPkg = root.packageName?.toString().orEmpty()
+        // Installer click only if root is still installer (not home after Cancel)
+        if (PrefsRepository.isPackageInstaller(eventPackage)) {
+            if (!TamperDetectors.isPackageInstallerPackage(rootPkg)) return false
+            if (!TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) &&
+                !TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
+            ) return false
+        } else if (!TamperDetectors.isOurAppInfo(this, eventPackage, "", root)) {
+            return false
+        }
 
         val labels = ForeignStrings.dangerousAppInfoActionLabels(this)
             .map { it.trim().lowercase() }
@@ -483,6 +488,39 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         }
     }
 
+    /** Cancel / לא / ביטול — leaving an uninstall dialog must never trigger PIN. */
+    private fun isNegativeOrDismissClick(event: AccessibilityEvent): Boolean {
+        val parts = mutableListOf<String>()
+        event.text?.forEach { parts.add(it.toString()) }
+        event.contentDescription?.let { parts.add(it.toString()) }
+        runCatching {
+            event.source?.let { src ->
+                src.text?.let { parts.add(it.toString()) }
+                src.contentDescription?.let { parts.add(it.toString()) }
+            }
+        }
+        val joined = parts.joinToString(" ").trim().lowercase()
+        if (joined.isEmpty()) return false
+        val negatives = listOf(
+            "cancel", "ביטול", "לא", "no", "dismiss", "סגור", "close",
+            "keep", "השאר", "keep app", "אל תסיר"
+        )
+        return negatives.any { joined == it || joined.startsWith("$it ") || joined.endsWith(" $it") }
+    }
+
+    /**
+     * Event package still packageinstaller but active window already left it
+     * (typical after Cancel) — do not self-protect.
+     */
+    private fun isStaleInstallerEvent(eventPackage: String, root: AccessibilityNodeInfo?): Boolean {
+        if (!PrefsRepository.isPackageInstaller(eventPackage) &&
+            !eventPackage.contains("packageinstaller", ignoreCase = true)
+        ) return false
+        val rootPkg = root?.packageName?.toString().orEmpty()
+        if (rootPkg.isBlank()) return true
+        return !TamperDetectors.isPackageInstallerPackage(rootPkg)
+    }
+
     /** Force-stop / uninstall confirmation dialog while our App Info is the subject. */
     private fun isOurDangerousConfirmDialog(
         eventPackage: String,
@@ -492,6 +530,11 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         if (!TamperDetectors.isSettings(eventPackage) &&
             !PrefsRepository.isPackageInstaller(eventPackage)
         ) return false
+        val rootPkg = root.packageName?.toString().orEmpty()
+        if (PrefsRepository.isPackageInstaller(eventPackage) &&
+            !TamperDetectors.isPackageInstallerPackage(rootPkg)
+        ) return false
+        if (TamperDetectors.isLauncher(rootPkg) || rootPkg == "com.android.systemui") return false
         if (!TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) &&
             !TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
         ) return false

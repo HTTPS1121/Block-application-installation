@@ -66,6 +66,8 @@ class AllowlistActivity : SecureActivity() {
 
         if (fromSetup) {
             binding.setupBanner.visibility = android.view.View.VISIBLE
+            binding.stepCaption.visibility = android.view.View.VISIBLE
+            OnboardingSteps.bind(binding.root, OnboardingSteps.ALLOWLIST)
         }
 
         loadApps()
@@ -101,10 +103,10 @@ class AllowlistActivity : SecureActivity() {
             .filter { app ->
                 val pkg = app.packageName
                 if (pkg == packageName) return@filter false
-                if (PrefsRepository.isCoreExempt(pkg)) return@filter false
-                if (PrefsRepository.isPackageInstaller(pkg)) return@filter false
-                if (pkg == PrefsRepository.PLAY_STORE) return@filter false
-                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
+                // System / installer / core — always open; not managed by allowlist
+                if (prefs.isAlwaysOpen(pkg)) return@filter false
+                // Only user-space apps the child can actually launch
+                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
                     pm.getLaunchIntentForPackage(pkg) != null
             }
             .map { app ->

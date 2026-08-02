@@ -38,6 +38,8 @@ class PinActivity : AppCompatActivity() {
             binding.pinConfirmLayout.visibility = View.VISIBLE
             binding.pinSubmit.setText(R.string.pin_continue)
             binding.btnForgot.visibility = View.GONE
+            binding.stepCaption.visibility = View.VISIBLE
+            OnboardingSteps.bind(binding.root, OnboardingSteps.PIN)
         } else {
             binding.btnForgot.visibility = View.VISIBLE
             binding.btnForgot.setOnClickListener { recoverWithCode() }
@@ -107,6 +109,8 @@ class PinActivity : AppCompatActivity() {
                 binding.pinConfirmLayout.visibility = View.VISIBLE
                 binding.pinSubmit.setText(R.string.pin_continue)
                 binding.btnForgot.visibility = View.GONE
+                binding.stepCaption.visibility = View.VISIBLE
+                OnboardingSteps.bind(binding.root, OnboardingSteps.PIN)
                 binding.pinInput.text?.clear()
             }
             .show()
