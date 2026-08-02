@@ -81,5 +81,14 @@
             android:layout_height="56dp"
             android:layout_marginTop="20dp"
             android:text="@string/pin_unlock" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnForgot"
+            style="@style/Widget.AppGuard.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/recovery_forgot"
+            android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>

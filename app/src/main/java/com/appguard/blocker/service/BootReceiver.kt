@@ -14,7 +14,7 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
         val prefs = PrefsRepository(context)
-        if (prefs.allowlistEnabled || prefs.installBlockEnabled) {
+        if (prefs.allowlistEnabled) {
             UsageMonitorService.start(context)
         }
     }

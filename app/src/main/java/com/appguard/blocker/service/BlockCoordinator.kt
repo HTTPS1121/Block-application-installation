@@ -13,61 +13,49 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import com.appguard.blocker.R
-import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.ui.BlockedActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Shared block logic used by Accessibility + UsageStats monitor.
- * Prefers SYSTEM_ALERT_WINDOW overlay; falls back to BlockedActivity.
+ * Shared block logic.
+ * HOME is rate-limited lightly to avoid crashing the process; never "gives up" on a package.
  */
 object BlockCoordinator {
 
-    private val blocking = AtomicBoolean(false)
-    private var lastPackage: String? = null
-    private var lastAt = 0L
+    private val overlayShowing = AtomicBoolean(false)
+    private var lastKickAt = 0L
+    private var lastKickPackage: String? = null
+    private var lastOverlayAt = 0L
     private val mainHandler = Handler(Looper.getMainLooper())
 
     @Volatile
     private var overlayView: android.view.View? = null
 
-    fun isSystemExempt(packageName: String): Boolean {
-        if (packageName in PrefsRepository.ALWAYS_ALLOWED) return true
-        if (packageName == "com.android.systemui") return true
-        if (packageName.contains("launcher", ignoreCase = true)) return true
-        if (packageName.contains("inputmethod", ignoreCase = true)) return true
-        if (packageName.contains("keyboard", ignoreCase = true)) return true
-        if (packageName.endsWith(".permissioncontroller")) return true
-        return false
-    }
-
     fun shouldBlockApp(context: Context, packageName: String): Boolean {
         if (packageName == context.packageName) return false
-        if (isSystemExempt(packageName)) return false
-        val prefs = PrefsRepository(context)
-        if (!prefs.allowlistEnabled) return false
-        if (prefs.isPackageAllowed(packageName)) return false
-        return true
+        return com.appguard.blocker.data.PrefsRepository(context).shouldBlockPackage(packageName)
     }
 
     fun blockApp(context: Context, packageName: String, mode: String = BlockedActivity.MODE_APP) {
-        if (!shouldThrottle(packageName)) return
+        if (packageName == context.packageName) return
         val appContext = context.applicationContext
+        val now = System.currentTimeMillis()
 
-        try {
-            val home = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            appContext.startActivity(home)
-        } catch (_: Exception) {
+        // Always try to leave the forbidden app, but don't spam HOME 20x/sec (causes crashes)
+        if (packageName != lastKickPackage || now - lastKickAt > 280) {
+            lastKickPackage = packageName
+            lastKickAt = now
+            goHome(appContext)
         }
 
         mainHandler.post {
-            if (Settings.canDrawOverlays(appContext)) {
-                showOverlay(appContext, packageName, mode)
-            } else {
-                openBlockedActivity(appContext, packageName, mode)
+            try {
+                if (Settings.canDrawOverlays(appContext)) {
+                    showOverlay(appContext, packageName, mode)
+                } else {
+                    openBlockedActivity(appContext, packageName, mode)
+                }
+            } catch (_: Exception) {
             }
         }
     }
@@ -76,17 +64,51 @@ object BlockCoordinator {
         blockApp(context, packageName, BlockedActivity.MODE_INSTALL)
     }
 
-    private fun shouldThrottle(packageName: String): Boolean {
-        val now = System.currentTimeMillis()
-        if (packageName == lastPackage && now - lastAt < 900) return false
-        lastPackage = packageName
-        lastAt = now
-        return true
+    /**
+     * Legacy path — must NEVER put a full-screen overlay over our own UI
+     * (that locked users out of opening the guardian). Prefer Challenge activity.
+     */
+    fun blockUninstallAttempt(context: Context) {
+        val appContext = context.applicationContext
+        dismissOverlay(appContext)
+        goHome(appContext)
     }
 
+    fun goHome(context: Context) {
+        try {
+            val home = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.applicationContext.startActivity(home)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun isOverlayShowing(): Boolean = overlayShowing.get()
+
+    /** Kaspersky "Please Wait" while kicking to PIN challenge. */
+    fun showPleaseWait(context: Context) {
+        val appContext = context.applicationContext
+        if (!Settings.canDrawOverlays(appContext)) return
+        mainHandler.post {
+            try {
+                showOverlay(appContext, appContext.packageName, MODE_PLEASE_WAIT)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    const val MODE_PLEASE_WAIT = "please_wait"
+
     private fun showOverlay(context: Context, packageName: String, mode: String) {
+        val now = System.currentTimeMillis()
+        if (overlayShowing.get() && now - lastOverlayAt < 500) {
+            return
+        }
+        lastOverlayAt = now
+
         dismissOverlay(context)
-        blocking.set(true)
 
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val view = LayoutInflater.from(context).inflate(R.layout.overlay_blocked, null)
@@ -94,27 +116,37 @@ object BlockCoordinator {
         val message = view.findViewById<TextView>(R.id.blockedMessage)
         val btn = view.findViewById<Button>(R.id.btnGoHome)
 
-        val label = runCatching {
-            context.packageManager.getApplicationLabel(
-                context.packageManager.getApplicationInfo(packageName, 0)
-            ).toString()
-        }.getOrDefault(packageName)
-
-        if (mode == BlockedActivity.MODE_INSTALL) {
-            title.setText(R.string.blocked_install_title)
-            message.setText(R.string.blocked_install_message)
+        val label = if (mode == BlockedActivity.MODE_UNINSTALL) {
+            context.getString(R.string.app_name)
         } else {
-            title.setText(R.string.blocked_title)
-            message.text = context.getString(R.string.blocked_message, label.ifBlank { packageName })
+            runCatching {
+                context.packageManager.getApplicationLabel(
+                    context.packageManager.getApplicationInfo(packageName, 0)
+                ).toString()
+            }.getOrDefault(packageName)
+        }
+
+        when (mode) {
+            BlockedActivity.MODE_INSTALL -> {
+                title.setText(R.string.blocked_install_title)
+                message.setText(R.string.blocked_install_message)
+            }
+            BlockedActivity.MODE_UNINSTALL, MODE_PLEASE_WAIT -> {
+                title.setText(R.string.cannot_uninstall_title)
+                message.setText(R.string.cannot_uninstall_message)
+            }
+            else -> {
+                title.setText(R.string.blocked_title)
+                message.text = context.getString(R.string.blocked_message, label.ifBlank { packageName })
+            }
         }
 
         btn.setOnClickListener {
             dismissOverlay(context)
-            val home = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            context.startActivity(home)
+            goHome(context)
+        }
+        if (mode == MODE_PLEASE_WAIT) {
+            btn.visibility = android.view.View.GONE
         }
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -138,16 +170,20 @@ object BlockCoordinator {
         try {
             wm.addView(view, params)
             overlayView = view
+            overlayShowing.set(true)
         } catch (_: Exception) {
-            blocking.set(false)
+            overlayShowing.set(false)
             openBlockedActivity(context, packageName, mode)
         }
     }
 
     fun dismissOverlay(context: Context) {
-        val view = overlayView ?: return
+        val view = overlayView ?: run {
+            overlayShowing.set(false)
+            return
+        }
         overlayView = null
-        blocking.set(false)
+        overlayShowing.set(false)
         try {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             wm.removeView(view)
@@ -156,17 +192,19 @@ object BlockCoordinator {
     }
 
     private fun openBlockedActivity(context: Context, packageName: String, mode: String) {
-        blocking.set(true)
-        val intent = Intent(context, BlockedActivity::class.java).apply {
-            addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
-            )
-            putExtra(BlockedActivity.EXTRA_MODE, mode)
-            putExtra(BlockedActivity.EXTRA_PACKAGE, packageName)
+        try {
+            val intent = Intent(context, BlockedActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                )
+                putExtra(BlockedActivity.EXTRA_MODE, mode)
+                putExtra(BlockedActivity.EXTRA_PACKAGE, packageName)
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
         }
-        context.startActivity(intent)
-        mainHandler.postDelayed({ blocking.set(false) }, 1000)
     }
 }

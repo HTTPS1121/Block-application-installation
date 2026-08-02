@@ -23,6 +23,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:taskAffinity=""
         android:theme="@style/Theme.AppGuard">
 
         <activity
@@ -34,6 +35,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.RecoveryActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden" />
 
         <activity
             android:name=".ui.SetupActivity"
@@ -61,6 +67,21 @@
             android:launchMode="singleInstance"
             android:taskAffinity=""
             android:theme="@style/Theme.AppGuard.Blocked" />
+
+        <activity
+            android:name=".ui.RescueActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <activity
+            android:name=".ui.ProtectionChallengeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:clearTaskOnLaunch="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <receiver
             android:name=".admin.AppDeviceAdminReceiver"

@@ -17,18 +17,16 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.ui.BlockedActivity
 import com.appguard.blocker.ui.MainActivity
 import com.appguard.blocker.util.PermissionHelper
 
-/**
- * Foreground service that polls UsageStats for the current foreground app.
- * Works together with Accessibility for Kaspersky-like coverage without Device Owner.
- */
 class UsageMonitorService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var prefs: PrefsRepository
-    private var lastFg: String? = null
+    private var lastBlockedFg: String? = null
+    private var lastBlockedAt = 0L
 
     private val tick = object : Runnable {
         override fun run() {
@@ -61,30 +59,35 @@ class UsageMonitorService : Service() {
     }
 
     private fun checkForeground() {
-        if (!prefs.allowlistEnabled && !prefs.installBlockEnabled) return
+        if (!prefs.protectionActive()) return
         if (!PermissionHelper.usageAccessGranted(this)) return
 
         val fg = queryForegroundPackage() ?: return
-        if (fg == lastFg) return
-        lastFg = fg
+        // HARD RULE: never kick the guardian itself
+        if (fg == packageName || fg == PrefsRepository.OUR_PACKAGE) return
+        if (PrefsRepository.isCoreExempt(fg)) return
+        if (!BlockCoordinator.shouldBlockApp(this, fg)) return
 
-        if (BlockCoordinator.shouldBlockApp(this, fg)) {
-            BlockCoordinator.blockApp(this, fg)
-        }
+        val now = System.currentTimeMillis()
+        // Keep re-blocking, but not faster than ~3/sec to avoid process death
+        if (fg == lastBlockedFg && now - lastBlockedAt < 320) return
+        lastBlockedFg = fg
+        lastBlockedAt = now
+
+        BlockCoordinator.blockApp(this, fg)
     }
 
     private fun queryForegroundPackage(): String? {
         val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val end = System.currentTimeMillis()
-        val begin = end - 15_000
+        val begin = end - 5_000
         val events = usm.queryEvents(begin, end)
         val event = UsageEvents.Event()
         var last: String? = null
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val type = event.eventType
-            val isFg = type == UsageEvents.Event.ACTIVITY_RESUMED ||
-                type == 1 /* MOVE_TO_FOREGROUND legacy */
+            val isFg = type == UsageEvents.Event.ACTIVITY_RESUMED || type == 1
             if (isFg) {
                 last = event.packageName
             }
@@ -127,8 +130,6 @@ class UsageMonitorService : Service() {
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -137,7 +138,7 @@ class UsageMonitorService : Service() {
     companion object {
         private const val CHANNEL_ID = "app_guard_monitor"
         private const val NOTIFICATION_ID = 1001
-        private const val POLL_MS = 700L
+        private const val POLL_MS = 400L
 
         fun start(context: Context) {
             val intent = Intent(context, UsageMonitorService::class.java)
