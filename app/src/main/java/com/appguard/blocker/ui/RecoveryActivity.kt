@@ -14,6 +14,7 @@ class RecoveryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRecoveryBinding
     private lateinit var prefs: PrefsRepository
+    private lateinit var shownCode: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,15 +25,25 @@ class RecoveryActivity : AppCompatActivity() {
         prefs = PrefsRepository(this)
         AuthSession.unlock()
 
-        val code = intent.getStringExtra(EXTRA_CODE)
+        // Prefer restored instance / intent — never regenerate on rotation (would overwrite hash)
+        shownCode = savedInstanceState?.getString(STATE_CODE)
+            ?: intent.getStringExtra(EXTRA_CODE)
             ?: prefs.generateAndStoreRecoveryCode()
+        intent.putExtra(EXTRA_CODE, shownCode)
 
         OnboardingSteps.bind(binding.root, OnboardingSteps.RECOVERY)
-        binding.recoveryCode.text = code
+        binding.recoveryCode.text = shownCode
         binding.btnConfirmShot.setOnClickListener {
             prefs.recoveryShown = true
             Toast.makeText(this, R.string.recovery_saved_hint, Toast.LENGTH_LONG).show()
             continueFlow()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (::shownCode.isInitialized) {
+            outState.putString(STATE_CODE, shownCode)
         }
     }
 
@@ -48,5 +59,6 @@ class RecoveryActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_CODE = "recovery_code"
+        private const val STATE_CODE = "state_recovery_code"
     }
 }

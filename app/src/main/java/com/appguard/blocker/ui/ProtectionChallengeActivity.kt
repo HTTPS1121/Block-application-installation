@@ -33,9 +33,9 @@ class ProtectionChallengeActivity : AppCompatActivity() {
 
         prefs = PrefsRepository(this)
         reason = parseReason(intent)
+        // Logical challenge state early; visibility flag only in onResume/onPause
         prefs.challengeActive = true
         prefs.pendingTamperReason = reason.name
-        AppAccessGuard.onChallengeUiStarted()
 
         binding.challengeTitle.setText(titleFor(reason))
         binding.challengeMessage.setText(messageFor(reason))
@@ -49,15 +49,17 @@ class ProtectionChallengeActivity : AppCompatActivity() {
         )
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
+        super.onResume()
+        // Activity is the resumed (interactive) window — correct visibility signal
         AppAccessGuard.onChallengeUiStarted()
         prefs.challengeActive = true
     }
 
-    override fun onStop() {
+    override fun onPause() {
+        // Covered or leaving — not the resumed activity anymore
         AppAccessGuard.onChallengeUiStopped()
-        super.onStop()
+        super.onPause()
     }
 
     override fun onDestroy() {

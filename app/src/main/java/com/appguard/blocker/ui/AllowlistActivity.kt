@@ -16,6 +16,8 @@ import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.databinding.ActivityAllowlistBinding
 import com.appguard.blocker.databinding.ItemAppBinding
 import com.appguard.blocker.protection.ProtectionController
+import com.appguard.blocker.util.PermissionHelper
+import com.appguard.blocker.service.UsageMonitorService
 
 data class AppItem(
     val packageName: String,
@@ -84,6 +86,11 @@ class AllowlistActivity : SecureActivity() {
             ProtectionController.arm(this)
         } else if (prefs.protectionArmed || prefs.allowlistEnabled) {
             prefs.allowlistEnabled = true
+            // Keep self-protect flag in sync with allowlist (same as MainActivity switch)
+            prefs.protectionArmed = PermissionHelper.criticalReady(this)
+            if (prefs.allowlistEnabled && PermissionHelper.usageAccessGranted(this)) {
+                UsageMonitorService.start(this)
+            }
         }
         Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show()
         leaveScreen()
