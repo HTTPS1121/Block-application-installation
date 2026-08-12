@@ -43,10 +43,12 @@ object AppAccessGuard {
         }
     }
 
+    /** Call from Challenge Activity onResume — UI is actually in front. */
     fun onChallengeUiStarted() {
         challengeUiShowing.set(true)
     }
 
+    /** Call from Challenge Activity onPause — no longer the resumed window. */
     fun onChallengeUiStopped() {
         challengeUiShowing.set(false)
     }
