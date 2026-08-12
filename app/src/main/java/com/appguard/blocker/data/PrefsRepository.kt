@@ -94,9 +94,12 @@ class PrefsRepository(context: Context) {
         }.getOrNull() ?: return null
         val issued = prefs.getLong(KEY_LEASE_ISSUED, 0L)
         val expires = prefs.getLong(KEY_LEASE_EXPIRES, 0L)
+        val expiresElapsed = prefs.getLong(KEY_LEASE_EXPIRES_ELAPSED, 0L)
         val nonce = prefs.getString(KEY_LEASE_NONCE, null) ?: return null
         if (issued <= 0L || expires <= 0L) return null
-        return com.appguard.blocker.protection.RemovalLease(reason, issued, expires, nonce)
+        return com.appguard.blocker.protection.RemovalLease(
+            reason, issued, expires, nonce, expiresElapsed
+        )
     }
 
     fun setRemovalLease(lease: com.appguard.blocker.protection.RemovalLease) {
@@ -104,6 +107,7 @@ class PrefsRepository(context: Context) {
             .putString(KEY_LEASE_REASON, lease.reason.name)
             .putLong(KEY_LEASE_ISSUED, lease.issuedAtMs)
             .putLong(KEY_LEASE_EXPIRES, lease.expiresAtMs)
+            .putLong(KEY_LEASE_EXPIRES_ELAPSED, lease.expiresAtElapsedRealtime)
             .putString(KEY_LEASE_NONCE, lease.nonce)
             .putBoolean(KEY_UNINSTALL_UNLOCKED, true)
             .apply()
@@ -114,6 +118,7 @@ class PrefsRepository(context: Context) {
             .remove(KEY_LEASE_REASON)
             .remove(KEY_LEASE_ISSUED)
             .remove(KEY_LEASE_EXPIRES)
+            .remove(KEY_LEASE_EXPIRES_ELAPSED)
             .remove(KEY_LEASE_NONCE)
             .putBoolean(KEY_UNINSTALL_UNLOCKED, false)
             .apply()
@@ -234,6 +239,7 @@ class PrefsRepository(context: Context) {
             .remove(KEY_LEASE_REASON)
             .remove(KEY_LEASE_ISSUED)
             .remove(KEY_LEASE_EXPIRES)
+            .remove(KEY_LEASE_EXPIRES_ELAPSED)
             .remove(KEY_LEASE_NONCE)
             .putBoolean(KEY_UNINSTALL_UNLOCKED, false)
             .apply()
@@ -286,6 +292,7 @@ class PrefsRepository(context: Context) {
         private const val KEY_LEASE_REASON = "removal_lease_reason"
         private const val KEY_LEASE_ISSUED = "removal_lease_issued"
         private const val KEY_LEASE_EXPIRES = "removal_lease_expires"
+        private const val KEY_LEASE_EXPIRES_ELAPSED = "removal_lease_expires_elapsed"
         private const val KEY_LEASE_NONCE = "removal_lease_nonce"
 
         const val PLAY_STORE = "com.android.vending"
