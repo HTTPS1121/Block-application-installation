@@ -10,6 +10,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.appguard.blocker.R
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.util.A11yNodes
 import com.appguard.blocker.util.ForeignStrings
 
 /**
@@ -85,10 +86,14 @@ object TamperDetectors {
             className.contains("settingssearch") ||
             className.contains("searchactivity") ||
             className.contains("searchresult") ||
-            className.contains("suggestion") && className.contains("settings")
+            className.contains("suggestion") && className.contains("settings") ||
+            className.contains("manageapplications") ||
+            className.contains("spaapplications")
         ) return true
 
         if (root == null) return false
+
+        if (isAllAppsListChrome(root)) return true
 
         // Active search field IDs (not every toolbar that mentions "search")
         if (treeHasSearchFieldId(root)) return true
@@ -100,7 +105,11 @@ object TamperDetectors {
             nodeWithText(root, "חיפוש בהגדרות") ||
             nodeWithText(root, "חיפוש הגדרות") ||
             nodeWithText(root, "חפש בהגדרות") ||
-            nodeWithText(root, "חיפוש הגדרה")
+            nodeWithText(root, "חיפוש הגדרה") ||
+            nodeWithText(root, "Search apps") ||
+            nodeWithText(root, "חיפוש אפליקציות") ||
+            nodeWithText(root, "חפש אפליקציות") ||
+            nodeWithText(root, "חיפוש באפליקציות")
         ) {
             // Homepage always shows the hint — only treat as search if EditText present / focused / results
             return hasEditable(root) || hasFocusedEditable(root) ||
@@ -109,12 +118,66 @@ object TamperDetectors {
 
         return try {
             val joined = collectJoined(root)
-            joined.contains("search settings") && hasEditable(root) ||
-                joined.contains("settingssearch")
+            (joined.contains("search settings") && hasEditable(root)) ||
+                joined.contains("settingssearch") ||
+                (joined.contains("search apps") && hasEditable(root))
         } catch (_: Exception) {
             false
         }
     }
+
+    /**
+     * Settings → Apps → All apps list (including in-page search while typing).
+     * Our name as a filtered row must NOT trigger uninstall / App Info detectors.
+     */
+    fun isAllAppsListUi(
+        eventClass: String,
+        root: AccessibilityNodeInfo?,
+        eventPackage: String = ""
+    ): Boolean {
+        if (root == null) return false
+        val pkg = eventPackage.lowercase().ifBlank {
+            root.packageName?.toString().orEmpty().lowercase()
+        }
+        if (!isSettings(pkg) && !isSettingsIntelligence(pkg)) return false
+
+        val className = eventClass.lowercase().ifBlank {
+            lastSettingsActivityClass.lowercase()
+        }
+        if (className.contains("manageapplications") ||
+            className.contains("spaapplications") ||
+            (className.contains("installedapp") &&
+                !className.contains("appinfo") &&
+                !className.contains("details"))
+        ) return true
+
+        if (isAllAppsListChrome(root)) return true
+
+        // Title may hide while search is active; list rows lack App Info controls
+        if (isSettings(pkg) &&
+            (treeHasSearchFieldId(root) || hasFocusedEditable(root) || hasEditable(root)) &&
+            !hasAppInfoPageMarkers(root)
+        ) {
+            return true
+        }
+
+        return false
+    }
+
+    private fun isAllAppsListChrome(root: AccessibilityNodeInfo): Boolean =
+        nodeWithExactText(root, "כל האפליקציות") ||
+            nodeWithExactText(root, "All apps") ||
+            nodeWithExactText(root, "See all apps") ||
+            nodeWithExactText(root, "Your apps") ||
+            nodeWithExactText(root, "האפליקציות שלך")
+
+    /** Force-stop / Uninstall / Archive buttons — absent on All-apps browser rows. */
+    private fun hasAppInfoPageMarkers(root: AccessibilityNodeInfo): Boolean =
+        listOf(
+            "Force stop", "Force Stop", "עצור בכוח", "סגירה ידנית",
+            "Uninstall", "הסרה", "הסר התקנה", "Archive", "העברה לארכיון",
+            "App info", "פרטי האפליקציה"
+        ).any { markerExactOrNode(root, it) }
 
     /**
      * Only OUR App Info. Exact title «שומר אפליקציות» + Uninstall/Force-stop controls.
@@ -131,6 +194,7 @@ object TamperDetectors {
         if (pkg.contains("launcher") || pkg == "com.android.systemui") return false
         if (!isSettings(pkg)) return false
         if (isSettingsSearchUi(eventClass, root, eventPackage)) return false
+        if (isAllAppsListUi(eventClass, root, eventPackage)) return false
 
         // Subject of the page must be us (exact node text), not a list row among many apps
         if (!hasExactAppTitle(root, appLabel(context)) &&
@@ -141,12 +205,6 @@ object TamperDetectors {
         val strong = ForeignStrings.appInfoStrongMarkers(context)
             .any { markerExactOrNode(root, it) }
         if (!strong) return false
-
-        // Reject "All apps" browser where our row is visible alongside sizes
-        if (nodeWithExactText(root, "כל האפליקציות") ||
-            nodeWithExactText(root, "All apps") ||
-            nodeWithExactText(root, "See all apps")
-        ) return false
 
         return true
     }
@@ -187,6 +245,8 @@ object TamperDetectors {
 
         if (isSettings(pkg)) {
             if (!isSettings(rootPkg) && rootPkg.isNotBlank()) return false
+            if (isSettingsSearchUi(eventClass, root, eventPackage)) return false
+            if (isAllAppsListUi(eventClass, root, eventPackage)) return false
             if (!isOurUninstallSubject(root, context)) return false
             return hasUninstallConfirm(root, className)
         }
@@ -248,6 +308,7 @@ object TamperDetectors {
         val className = effectiveClass(eventClass).lowercase()
         if (!isSettings(pkg) && !className.contains("deviceadmin")) return false
         if (isSettingsSearchUi(eventClass, root, eventPackage)) return false
+        if (isAllAppsListUi(eventClass, root, eventPackage)) return false
         // Exact label — not «our name appears somewhere in Settings»
         if (!hasExactAppTitle(root, appLabel(context)) &&
             !hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
@@ -289,6 +350,7 @@ object TamperDetectors {
         val pkg = eventPackage.lowercase()
         if (!isSettings(pkg)) return false
         if (isSettingsSearchUi(eventClass, root, eventPackage)) return false
+        if (isAllAppsListUi(eventClass, root, eventPackage)) return false
 
         val descr = context.getString(R.string.accessibility_service_description)
         if (nodeWithText(root, descr)) return true
@@ -345,7 +407,11 @@ object TamperDetectors {
                 val c = n.childCount.coerceAtMost(40)
                 for (i in 0 until c) {
                     val child = n.getChild(i) ?: continue
-                    if (walk(child, depth + 1)) return true
+                    try {
+                        if (walk(child, depth + 1)) return true
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
                 }
                 return false
             }
@@ -366,7 +432,12 @@ object TamperDetectors {
         // Prefer exact; fall back to findByText only for longer markers (≥4) to avoid «הסר» noise
         if (text.length >= 4 && nodeWithExactText(root, text)) return true
         return try {
-            root.findAccessibilityNodeInfosByText(text)?.isNotEmpty() == true
+            val list = root.findAccessibilityNodeInfosByText(text)
+            try {
+                list?.isNotEmpty() == true
+            } finally {
+                A11yNodes.recycleAll(list)
+            }
         } catch (_: Exception) {
             false
         }
@@ -378,7 +449,12 @@ object TamperDetectors {
         // Short markers («הסר») — exact only; longer — substring OK
         if (marker.length < 4) return false
         return try {
-            root.findAccessibilityNodeInfosByText(marker)?.isNotEmpty() == true
+            val list = root.findAccessibilityNodeInfosByText(marker)
+            try {
+                list?.isNotEmpty() == true
+            } finally {
+                A11yNodes.recycleAll(list)
+            }
         } catch (_: Exception) {
             false
         }
@@ -395,7 +471,11 @@ object TamperDetectors {
                 val c = n.childCount.coerceAtMost(40)
                 for (i in 0 until c) {
                     val child = n.getChild(i) ?: continue
-                    if (walk(child, depth + 1)) return true
+                    try {
+                        if (walk(child, depth + 1)) return true
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
                 }
                 return false
             }
@@ -408,8 +488,8 @@ object TamperDetectors {
     private fun treeHasSearchFieldId(root: AccessibilityNodeInfo): Boolean {
         val needles = listOf(
             "search_src_text", "search_src", "open_search_view",
-            "search_action_bar_title", "search_view", "animated_hint",
-            ":id/search_bar", "settings_search"
+            "search_action_bar_title", "search_action_bar", "search_view", "animated_hint",
+            ":id/search_bar", "settings_search", "apps_search", "search_list"
         )
         return try {
             fun walk(node: AccessibilityNodeInfo, depth: Int): Boolean {
@@ -419,7 +499,11 @@ object TamperDetectors {
                 val c = node.childCount.coerceAtMost(40)
                 for (i in 0 until c) {
                     val child = node.getChild(i) ?: continue
-                    if (walk(child, depth + 1)) return true
+                    try {
+                        if (walk(child, depth + 1)) return true
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
                 }
                 return false
             }
@@ -438,7 +522,11 @@ object TamperDetectors {
                 val c = n.childCount.coerceAtMost(40)
                 for (i in 0 until c) {
                     val child = n.getChild(i) ?: continue
-                    if (walk(child, depth + 1)) return true
+                    try {
+                        if (walk(child, depth + 1)) return true
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
                 }
                 return false
             }
@@ -455,7 +543,14 @@ object TamperDetectors {
             n.text?.let { out.add(it.toString()) }
             n.contentDescription?.let { out.add(it.toString()) }
             val c = n.childCount.coerceAtMost(30)
-            for (i in 0 until c) n.getChild(i)?.let { walk(it, depth + 1) }
+            for (i in 0 until c) {
+                val child = n.getChild(i) ?: continue
+                try {
+                    walk(child, depth + 1)
+                } finally {
+                    A11yNodes.recycleQuietly(child)
+                }
+            }
         }
         walk(root, 0)
         return out.joinToString(" ").lowercase()
