@@ -13,6 +13,7 @@ import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.protection.TamperDetectors
 import com.appguard.blocker.protection.TamperReason
 import com.appguard.blocker.ui.BlockedActivity
+import com.appguard.blocker.util.A11yNodes
 import com.appguard.blocker.util.ForeignStrings
 
 /**
@@ -304,7 +305,8 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             return null
         }
         if (TamperDetectors.isSettings(packageName) &&
-            TamperDetectors.isSettingsSearchUi(className, root, packageName)
+            (TamperDetectors.isSettingsSearchUi(className, root, packageName) ||
+                TamperDetectors.isAllAppsListUi(className, root, packageName))
         ) {
             return null
         }
@@ -356,8 +358,13 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         // Kaspersky: match OUR accessibility description text in tree
         val descr = getString(R.string.accessibility_service_description)
         val hasDescr = try {
-            root?.findAccessibilityNodeInfosByText(descr)?.isNotEmpty() == true ||
-                joined.contains(descr.lowercase().take(24))
+            val list = root?.findAccessibilityNodeInfosByText(descr)
+            try {
+                list?.isNotEmpty() == true ||
+                    joined.contains(descr.lowercase().take(24))
+            } finally {
+                A11yNodes.recycleAll(list)
+            }
         } catch (_: Exception) {
             false
         }
@@ -367,14 +374,14 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             treeContainsOurLabel(root)
         if (!ourService) return false
 
-        return findClickableByLabels(
+        return hasClickableByLabels(
             root ?: return true,
             listOf(
                 "turn off", "כבה", "disable", "השבת",
                 "use service", "השתמש בשירות", "off", "on"
             ),
             0
-        ) != null || hasSwitch(root) ||
+        ) || hasSwitch(root) ||
             joined.contains("use service") ||
             joined.contains("השתמש בשירות")
     }
@@ -387,7 +394,12 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         }
         val count = node.childCount.coerceAtMost(40)
         for (i in 0 until count) {
-            if (hasSwitch(node.getChild(i))) return true
+            val child = node.getChild(i) ?: continue
+            try {
+                if (hasSwitch(child)) return true
+            } finally {
+                A11yNodes.recycleQuietly(child)
+            }
         }
         return false
     }
@@ -398,8 +410,12 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         event.contentDescription?.let { parts.add(it.toString()) }
         runCatching {
             event.source?.let { src ->
-                src.text?.let { parts.add(it.toString()) }
-                src.contentDescription?.let { parts.add(it.toString()) }
+                try {
+                    src.text?.let { parts.add(it.toString()) }
+                    src.contentDescription?.let { parts.add(it.toString()) }
+                } finally {
+                    A11yNodes.recycleQuietly(src)
+                }
             }
         }
         val joined = parts.joinToString(" ").lowercase()
@@ -417,11 +433,11 @@ class AppMonitorAccessibilityService : AccessibilityService() {
 
     private fun hasUninstallControl(root: AccessibilityNodeInfo?): Boolean {
         if (root == null) return false
-        return findClickableByLabels(
+        return hasClickableByLabels(
             root,
             listOf("uninstall", "הסר", "הסרה", "הסר התקנה", "uninstall updates", "delete app"),
             0
-        ) != null
+        )
     }
 
     private fun eatDangerousAppInfoAction() {
@@ -445,6 +461,10 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         }
         if (!TamperDetectors.isSettings(eventPackage) &&
             !PrefsRepository.isPackageInstaller(eventPackage)
+        ) return false
+        if (TamperDetectors.isSettings(eventPackage) &&
+            (TamperDetectors.isSettingsSearchUi("", root, eventPackage) ||
+                TamperDetectors.isAllAppsListUi("", root, eventPackage))
         ) return false
 
         val rootPkg = root.packageName?.toString().orEmpty()
@@ -471,11 +491,20 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             var node: AccessibilityNodeInfo? = event.source
             var hops = 0
             while (node != null && hops < 3) {
-                node.text?.let { nodeTexts.add(it.toString()) }
-                node.contentDescription?.let { nodeTexts.add(it.toString()) }
-                node = node.parent
+                try {
+                    node.text?.let { nodeTexts.add(it.toString()) }
+                    node.contentDescription?.let { nodeTexts.add(it.toString()) }
+                    val parent = node.parent
+                    A11yNodes.recycleQuietly(node)
+                    node = parent
+                } catch (_: Exception) {
+                    A11yNodes.recycleQuietly(node)
+                    node = null
+                    break
+                }
                 hops++
             }
+            A11yNodes.recycleQuietly(node)
         }
         if (nodeTexts.isEmpty()) return false
 
@@ -495,8 +524,12 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         event.contentDescription?.let { parts.add(it.toString()) }
         runCatching {
             event.source?.let { src ->
-                src.text?.let { parts.add(it.toString()) }
-                src.contentDescription?.let { parts.add(it.toString()) }
+                try {
+                    src.text?.let { parts.add(it.toString()) }
+                    src.contentDescription?.let { parts.add(it.toString()) }
+                } finally {
+                    A11yNodes.recycleQuietly(src)
+                }
             }
         }
         val joined = parts.joinToString(" ").trim().lowercase()
@@ -535,6 +568,10 @@ class AppMonitorAccessibilityService : AccessibilityService() {
             !TamperDetectors.isPackageInstallerPackage(rootPkg)
         ) return false
         if (TamperDetectors.isLauncher(rootPkg) || rootPkg == "com.android.systemui") return false
+        if (TamperDetectors.isSettings(eventPackage) &&
+            (TamperDetectors.isSettingsSearchUi("", root, eventPackage) ||
+                TamperDetectors.isAllAppsListUi("", root, eventPackage))
+        ) return false
         if (!TamperDetectors.hasExactAppTitle(root, getString(R.string.app_name)) &&
             !TamperDetectors.hasExactAppTitle(root, PrefsRepository.OUR_LABEL)
         ) return false
@@ -545,7 +582,14 @@ class AppMonitorAccessibilityService : AccessibilityService() {
                 n.text?.let { append(it).append(' ') }
                 n.contentDescription?.let { append(it).append(' ') }
                 val c = n.childCount.coerceAtMost(25)
-                for (i in 0 until c) n.getChild(i)?.let { walk(it, depth + 1) }
+                for (i in 0 until c) {
+                    val child = n.getChild(i) ?: continue
+                    try {
+                        walk(child, depth + 1)
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
+                }
             }
             walk(root, 0)
         }.lowercase()
@@ -553,9 +597,11 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         val looksConfirm =
             joined.contains("force stop") || joined.contains("עצור בכוח") ||
                 joined.contains("סגירה ידנית") ||
-                joined.contains("uninstall") || joined.contains("הסר") ||
-                joined.contains("archive") || joined.contains("ארכיון") ||
-                joined.contains("disable app") || joined.contains("השבת")
+                joined.contains("uninstall app") || joined.contains("uninstall updates") ||
+                joined.contains("disable app") || joined.contains("השבת את") ||
+                joined.contains("להסיר את האפליקציה") ||
+                TamperDetectors.nodeWithExactText(root, "הסרה") ||
+                TamperDetectors.nodeWithExactText(root, "Uninstall")
         if (!looksConfirm) return false
 
         // Dialog chrome: OK / Force stop / Uninstall affirmative
@@ -593,7 +639,11 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         val count = node.childCount.coerceAtMost(40)
         for (i in 0 until count) {
             val child = node.getChild(i) ?: continue
-            if (treeContainsOurPackage(child, depth + 1)) return true
+            try {
+                if (treeContainsOurPackage(child, depth + 1)) return true
+            } finally {
+                A11yNodes.recycleQuietly(child)
+            }
         }
         return false
     }
@@ -603,38 +653,101 @@ class AppMonitorAccessibilityService : AccessibilityService() {
 
     private fun clickCancelLikeButtons() {
         val root = rootInActiveWindow ?: return
-        findClickableByLabels(
+        clickFirstByLabels(
             root,
             listOf("cancel", "ביטול", "לא", "no", "dismiss", "סגור", "close", "keep", "השאר"),
             0
-        )?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        )
     }
 
-    private fun findClickableByLabels(
+    /** True if a clickable label exists; recycles all children obtained via getChild. */
+    private fun hasClickableByLabels(
         node: AccessibilityNodeInfo,
         labels: List<String>,
         depth: Int
-    ): AccessibilityNodeInfo? {
-        if (depth > 12) return null
+    ): Boolean {
+        if (depth > 12) return false
         val text = (node.text?.toString().orEmpty() + " " +
             node.contentDescription?.toString().orEmpty()).trim().lowercase()
         if (text.isNotEmpty() && labels.any { text == it || text.startsWith("$it ") }) {
-            if (node.isClickable) return node
-            var p = node.parent
+            if (node.isClickable) return true
+            var p: AccessibilityNodeInfo? = node.parent
             var hops = 0
             while (p != null && hops < 4) {
-                if (p.isClickable) return p
-                p = p.parent
+                try {
+                    if (p.isClickable) {
+                        A11yNodes.recycleQuietly(p)
+                        return true
+                    }
+                    val next = p.parent
+                    A11yNodes.recycleQuietly(p)
+                    p = next
+                } catch (_: Exception) {
+                    A11yNodes.recycleQuietly(p)
+                    p = null
+                    break
+                }
                 hops++
             }
+            A11yNodes.recycleQuietly(p)
         }
         val count = node.childCount.coerceAtMost(40)
         for (i in 0 until count) {
             val child = node.getChild(i) ?: continue
-            val found = findClickableByLabels(child, labels, depth + 1)
-            if (found != null) return found
+            try {
+                if (hasClickableByLabels(child, labels, depth + 1)) return true
+            } finally {
+                A11yNodes.recycleQuietly(child)
+            }
         }
-        return null
+        return false
+    }
+
+    /** Click first matching label; recycles children. */
+    private fun clickFirstByLabels(
+        node: AccessibilityNodeInfo,
+        labels: List<String>,
+        depth: Int
+    ): Boolean {
+        if (depth > 12) return false
+        val text = (node.text?.toString().orEmpty() + " " +
+            node.contentDescription?.toString().orEmpty()).trim().lowercase()
+        if (text.isNotEmpty() && labels.any { text == it || text.startsWith("$it ") }) {
+            if (node.isClickable) {
+                node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                return true
+            }
+            var p: AccessibilityNodeInfo? = node.parent
+            var hops = 0
+            while (p != null && hops < 4) {
+                try {
+                    if (p.isClickable) {
+                        p.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        A11yNodes.recycleQuietly(p)
+                        return true
+                    }
+                    val next = p.parent
+                    A11yNodes.recycleQuietly(p)
+                    p = next
+                } catch (_: Exception) {
+                    A11yNodes.recycleQuietly(p)
+                    p = null
+                    break
+                }
+                hops++
+            }
+            A11yNodes.recycleQuietly(p)
+        }
+        val count = node.childCount.coerceAtMost(40)
+        for (i in 0 until count) {
+            val child = node.getChild(i) ?: continue
+            try {
+                if (clickFirstByLabels(child, labels, depth + 1)) return true
+            } finally {
+                A11yNodes.recycleQuietly(child)
+            }
+        }
+        return false
     }
 
     private fun isPlayNewInstallScreen(event: AccessibilityEvent): Boolean {
@@ -680,7 +793,12 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         node.viewIdResourceName?.let { out.add(it) }
         val count = node.childCount.coerceAtMost(30)
         for (i in 0 until count) {
-            node.getChild(i)?.let { child -> collectTexts(child, out, depth + 1) }
+            val child = node.getChild(i) ?: continue
+            try {
+                collectTexts(child, out, depth + 1)
+            } finally {
+                A11yNodes.recycleQuietly(child)
+            }
         }
     }
 
