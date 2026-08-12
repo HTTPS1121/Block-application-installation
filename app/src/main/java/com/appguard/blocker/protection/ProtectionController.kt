@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
@@ -100,12 +101,14 @@ object ProtectionController {
         navigateToSystem: Boolean = reason == TamperReason.MANUAL_UNLOCK
     ) {
         val prefs = PrefsRepository(context)
-        val now = System.currentTimeMillis()
+        val nowWall = System.currentTimeMillis()
+        val nowElapsed = SystemClock.elapsedRealtime()
         val lease = RemovalLease(
             reason = reason,
-            issuedAtMs = now,
-            expiresAtMs = now + LEASE_MS,
-            nonce = UUID.randomUUID().toString()
+            issuedAtMs = nowWall,
+            expiresAtMs = nowWall + LEASE_MS,
+            nonce = UUID.randomUUID().toString(),
+            expiresAtElapsedRealtime = nowElapsed + LEASE_MS
         )
         prefs.setRemovalLease(lease)
         prefs.challengeActive = false
@@ -119,7 +122,7 @@ object ProtectionController {
             }
         }
 
-        scheduleLeaseExpiry(context.applicationContext)
+        scheduleLeaseExpiry(context.applicationContext, lease.expiresAtElapsedRealtime)
 
         if (navigateToSystem) {
             openSystemTarget(context, reason)
@@ -198,13 +201,14 @@ object ProtectionController {
         }
     }
 
-    private fun scheduleLeaseExpiry(appContext: Context) {
+    private fun scheduleLeaseExpiry(appContext: Context, expiresAtElapsed: Long) {
         cancelLeaseTimer()
+        val delayMs = (expiresAtElapsed - SystemClock.elapsedRealtime() + 250L).coerceAtLeast(0L)
         val r = Runnable {
             expireLeaseIfNeeded(appContext)
         }
         leaseExpireRunnable = r
-        mainHandler.postDelayed(r, LEASE_MS + 250L)
+        mainHandler.postDelayed(r, delayMs)
     }
 
     private fun cancelLeaseTimer() {

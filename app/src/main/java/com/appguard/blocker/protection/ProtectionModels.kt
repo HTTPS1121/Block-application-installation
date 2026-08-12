@@ -1,5 +1,7 @@
 package com.appguard.blocker.protection
 
+import android.os.SystemClock
+
 /**
  * Kaspersky-style protection states.
  *
@@ -26,8 +28,20 @@ data class RemovalLease(
     val reason: TamperReason,
     val issuedAtMs: Long,
     val expiresAtMs: Long,
-    val nonce: String
+    val nonce: String,
+    /** [SystemClock.elapsedRealtime] deadline — immune to wall-clock jumps. */
+    val expiresAtElapsedRealtime: Long = 0L
 ) {
-    fun isValid(now: Long = System.currentTimeMillis()): Boolean =
-        now in issuedAtMs..expiresAtMs
+    /**
+     * Valid only while BOTH clocks agree the window is open (more restrictive wins).
+     * Wall clock covers process restart; elapsed covers NTP / manual time changes.
+     */
+    fun isValid(
+        nowWall: Long = System.currentTimeMillis(),
+        nowElapsed: Long = SystemClock.elapsedRealtime()
+    ): Boolean {
+        if (nowWall < issuedAtMs || nowWall >= expiresAtMs) return false
+        if (expiresAtElapsedRealtime > 0L && nowElapsed >= expiresAtElapsedRealtime) return false
+        return true
+    }
 }
