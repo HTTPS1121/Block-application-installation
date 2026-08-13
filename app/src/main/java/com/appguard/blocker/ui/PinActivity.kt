@@ -29,6 +29,11 @@ class PinActivity : AppCompatActivity() {
         SecureActivity.applyInsets(this, binding.root)
         prefs = PrefsRepository(this)
         AppAccessGuard.onGuardianUiOpened(this)
+        binding.appVersion.text = getString(
+            R.string.app_version_label,
+            runCatching { packageManager.getPackageInfo(packageName, 0).versionName }
+                .getOrNull().orEmpty().ifBlank { "?" }
+        )
 
         setupMode = !prefs.hasPin()
         if (setupMode) {

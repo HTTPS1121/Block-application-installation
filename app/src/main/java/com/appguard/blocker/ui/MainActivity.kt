@@ -23,6 +23,7 @@ class MainActivity : SecureActivity() {
         setContentView(binding.root)
         prefs = PrefsRepository(this)
         binding.pendingCount.visibility = View.GONE
+        binding.appVersion.text = getString(R.string.app_version_label, appVersionName())
 
         binding.btnSetupPermissions.setOnClickListener {
             startActivity(Intent(this, SetupActivity::class.java))
@@ -122,4 +123,9 @@ class MainActivity : SecureActivity() {
             getString(R.string.allowlist_count, prefs.getAllowedPackages().size)
         binding.pendingCount.visibility = View.GONE
     }
+
+    private fun appVersionName(): String =
+        runCatching {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        }.getOrNull().orEmpty().ifBlank { "?" }
 }

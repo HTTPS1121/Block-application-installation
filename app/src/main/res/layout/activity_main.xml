@@ -26,7 +26,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:paddingHorizontal="16dp"
-        android:paddingBottom="24dp"
+        android:paddingBottom="56dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -191,4 +191,16 @@
                 android:text="@string/settings" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/appVersion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="20dp"
+        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+        android:textColor="?attr/colorOnSurfaceVariant" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
