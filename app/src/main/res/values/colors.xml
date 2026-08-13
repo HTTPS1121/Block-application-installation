@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fallback when Dynamic Color unavailable — seeded like ReVanced Manager -->
+    <color name="md_seed">#6750A4</color>
+
+    <!-- Dark (ReVanced: surface #131316, primary #BFC1FF) -->
+    <color name="md_theme_primary">#BFC1FF</color>
+    <color name="md_theme_on_primary">#262A78</color>
+    <color name="md_theme_primary_container">#3D4296</color>
+    <color name="md_theme_on_primary_container">#E0E0FF</color>
+
+    <color name="md_theme_secondary">#C5C4DD</color>
+    <color name="md_theme_on_secondary">#2E2F42</color>
+    <color name="md_theme_secondary_container">#444559</color>
+    <color name="md_theme_on_secondary_container">#E1E0F9</color>
+
+    <color name="md_theme_tertiary">#E9B9D3</color>
+    <color name="md_theme_on_tertiary">#46263A</color>
+    <color name="md_theme_tertiary_container">#5F3C51</color>
+    <color name="md_theme_on_tertiary_container">#FFD8EB</color>
+
+    <color name="md_theme_error">#FFB4AB</color>
+    <color name="md_theme_on_error">#690005</color>
+    <color name="md_theme_error_container">#93000A</color>
+    <color name="md_theme_on_error_container">#FFDAD6</color>
+
+    <color name="md_theme_background">#131316</color>
+    <color name="md_theme_on_background">#E4E1E6</color>
+    <color name="md_theme_surface">#131316</color>
+    <color name="md_theme_on_surface">#E4E1E6</color>
+    <color name="md_theme_surface_variant">#46464F</color>
+    <color name="md_theme_on_surface_variant">#C7C5D0</color>
+    <color name="md_theme_outline">#91909A</color>
+    <color name="md_theme_outline_variant">#46464F</color>
+    <color name="md_theme_surface_container">#1C1B1F</color>
+    <color name="md_theme_surface_container_high">#2B2930</color>
+    <color name="md_theme_surface_container_highest">#36343B</color>
+    <color name="md_theme_surface_container_low">#1B1B1F</color>
+    <color name="md_theme_inverse_surface">#E4E1E6</color>
+    <color name="md_theme_inverse_on_surface">#313033</color>
+
+    <!-- Compat aliases used across layouts -->
+    <color name="bg">@color/md_theme_background</color>
+    <color name="bg_elevated">@color/md_theme_surface_container</color>
+    <color name="surface">@color/md_theme_surface_container</color>
+    <color name="surface_high">@color/md_theme_surface_container_high</color>
+    <color name="accent">@color/md_theme_primary</color>
+    <color name="accent_dim">@color/md_theme_primary_container</color>
+    <color name="accent_soft">@color/md_theme_primary_container</color>
+    <color name="danger">@color/md_theme_error</color>
+    <color name="danger_soft">@color/md_theme_error_container</color>
+    <color name="warning">#F9DEAC</color>
+    <color name="text_primary">@color/md_theme_on_surface</color>
+    <color name="text_secondary">@color/md_theme_on_surface_variant</color>
+    <color name="text_muted">@color/md_theme_outline</color>
+    <color name="stroke">@color/md_theme_outline_variant</color>
+    <color name="stroke_strong">@color/md_theme_outline</color>
+    <color name="launcher_bg">#131316</color>
+    <color name="launcher_fg">#BFC1FF</color>
+</resources>

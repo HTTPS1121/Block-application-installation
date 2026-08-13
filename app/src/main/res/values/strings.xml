@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">שומר אפליקציות</string>
+    <string name="app_version_label">גרסה %1$s</string>
+    <string name="device_admin_description">מנהל המכשיר מקשיח הסרה. כדי להסיר – היכנס עם קוד הניהול ושחרר את נעילת ההסרה בהגדרות.</string>
+    <string name="accessibility_service_description">עוקב אחרי פתיחת אפליקציות, חוסם יישומים שלא ברשימה המותרת, וחוסם ניסיונות הסרה או ביטול הגנה.</string>
+
+    <string name="pin_title">קוד ניהול</string>
+    <string name="pin_setup_title">הגדרת קוד ניהול</string>
+    <string name="pin_setup_hint">בחר קוד בן 4–8 ספרות</string>
+    <string name="pin_confirm_hint">אשר את הקוד</string>
+    <string name="pin_enter_hint">הזן קוד ניהול</string>
+    <string name="pin_continue">המשך</string>
+    <string name="pin_unlock">כניסה</string>
+    <string name="pin_mismatch">הקודים לא תואמים</string>
+    <string name="pin_wrong">קוד שגוי</string>
+    <string name="pin_too_short">הקוד חייב להיות לפחות 4 ספרות</string>
+
+    <string name="recovery_title">קוד שחזור</string>
+    <string name="recovery_hint">שמור את הקוד במקום בטוח. אם תשכח את קוד הניהול – רק איתו תוכל לאפס.</string>
+    <string name="recovery_screenshot">עכשיו צלם מסך של הקוד הזה</string>
+    <string name="recovery_confirm">צילמתי – המשך</string>
+    <string name="recovery_saved_hint">מעולה. הקוד לא יוצג שוב.</string>
+    <string name="recovery_forgot">שחזור עם קוד שחזור</string>
+    <string name="recovery_use_title">קוד שחזור</string>
+    <string name="recovery_use_message">הזן את קוד השחזור מהצילום. אחרי אימות תוכל להגדיר קוד ניהול חדש.</string>
+    <string name="recovery_enter">קוד שחזור</string>
+    <string name="recovery_wrong">קוד שחזור שגוי</string>
+    <string name="recovery_ok_set_pin">אומת. הגדר קוד ניהול חדש.</string>
+
+    <string name="main_title">שומר אפליקציות</string>
+    <string name="protection_status">סטטוס הגנה</string>
+    <string name="protection_inactive">ההגנה כבויה</string>
+    <string name="level1_title">הגנה</string>
+    <string name="level1_desc">רק אפליקציות מסומנות ברשימה המותרת נפתחות. כל השאר חסום.</string>
+    <string name="manage_allowlist">ניהול רשימה מותרת</string>
+    <string name="settings">הגדרות</string>
+    <string name="required_permissions">הרשאות נדרשות</string>
+    <string name="open_setup">הגדרת הרשאות הגנה</string>
+    <string name="permissions_ready">כל ההרשאות הקריטיות פעילות</string>
+    <string name="permissions_missing">חסרות הרשאות – ההגנה לא מלאה</string>
+    <string name="enable_full_protection">הפעל הגנה – בחר מותרות</string>
+    <string name="full_protection_on">בחר אילו אפליקציות מותר לפתוח ואשר</string>
+    <string name="allowlist_count">מותרות: %1$d</string>
+    <string name="pending_count">ממתינות: %1$d</string>
+
+    <string name="setup_title">הגדרת הגנה</string>
+    <string name="setup_subtitle">אשר את כל ההרשאות. בסיום ההגנה תופעל ותועבר לבחירת אפליקציות מותרות. בזמן האשף לא תיחסם מההגדרות.</string>
+    <string name="setup_progress">הושלמו %1$d מתוך %2$d הרשאות קריטיות</string>
+    <string name="setup_enable">הפעל</string>
+    <string name="setup_done">פעיל</string>
+    <string name="setup_open_oem">פתח הגדרות יצרן</string>
+    <string name="setup_continue">סיום והפעלת הגנה</string>
+    <string name="setup_incomplete">יש להפעיל את כל ההרשאות הקריטיות לפני המשך.</string>
+
+    <string name="perm_accessibility_title">שירות נגישות</string>
+    <string name="perm_accessibility_desc">מזהה אפליקציות, חוסם אותן, ומונע הסרה/ביטול הגנה.</string>
+    <string name="perm_usage_title">גישה לנתוני שימוש</string>
+    <string name="perm_usage_desc">יודע איזו אפליקציה בחזית גם בלי אירוע נגישות.</string>
+    <string name="perm_admin_title">מנהל המכשיר</string>
+    <string name="perm_admin_desc">מקשיח הסרה ומציג אזהרה לפני ביטול.</string>
+    <string name="perm_overlay_title">הצגה מעל אפליקציות</string>
+    <string name="perm_overlay_desc">מציג מסך חסימה מיד מעל אפליקציה אסורה.</string>
+    <string name="perm_battery_title">התעלמות מאופטימיזציית סוללה</string>
+    <string name="perm_battery_desc">מונע מאנדרואיד לעצור את שירות המעקב ברקע.</string>
+    <string name="perm_notifications_title">התראות</string>
+    <string name="perm_notifications_desc">נדרש להצגת התראת שירות הרקע.</string>
+    <string name="perm_oem_title">הפעלה אוטומטית / רקע (יצרן)</string>
+    <string name="perm_oem_desc">בחלק מהמכשירים צריך לאפשר Auto-start ידנית בהגדרות היצרן.</string>
+    <string name="perm_oem_unavailable">לא נמצא מסך יצרן – בדוק בהגדרות האפליקציה / סוללה.</string>
+
+    <string name="monitor_channel_name">ניטור הגנה</string>
+    <string name="monitor_channel_desc">שומר על שירות המעקב פעיל ברקע</string>
+    <string name="monitor_notification_title">שומר אפליקציות פעיל</string>
+    <string name="monitor_notification_text">מעקב אחרי אפליקציות והתקנות רץ ברקע</string>
+
+    <string name="settings_title">הגדרות</string>
+    <string name="change_pin">שינוי קוד ניהול</string>
+    <string name="current_pin">קוד נוכחי</string>
+    <string name="new_pin">קוד חדש</string>
+    <string name="confirm_new_pin">אישור קוד חדש</string>
+    <string name="save_pin">שמור קוד</string>
+    <string name="pin_changed">הקוד עודכן</string>
+    <string name="unlock_uninstall_title">שחרור נעילת הסרה</string>
+    <string name="unlock_uninstall_desc">רק נעילת ההסרה תיפתח. חסימת אפליקציות/התקנות תישאר פעילה.</string>
+    <string name="unlock_uninstall">שחרר נעילת הסרה (דורש קוד)</string>
+    <string name="relock_uninstall">נעל שוב את ההסרה</string>
+    <string name="unlock_status_locked">סטטוס: נעול – אי אפשר להסיר בלי שחרור</string>
+    <string name="unlock_status_open">סטטוס: פתוח – אפשר להסיר את האפליקציה (ההגנה עדיין פעילה)</string>
+    <string name="unlock_confirm_title">שחרור נעילה</string>
+    <string name="unlock_confirm_message">הזן קוד ניהול. ייפתח רק אישור להסרה – רמות החסימה יישארו.</string>
+    <string name="confirm">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="uninstall_unlocked">נעילת ההסרה שוחררה.</string>
+    <string name="uninstall_unlocked_keep_protection">נעילת ההסרה שוחררה. חסימת אפליקציות עדיין פעילה. אפשר להסיר מהגדרות המכשיר.</string>
+    <string name="cannot_uninstall_title">לא ניתן להסיר</string>
+    <string name="cannot_uninstall_message">אי אפשר להסיר / לבטל הגנה בלי שחרור. פתח \"שומר אפליקציות\", הזן קוד ניהול, ובחר \"שחרר נעילת הסרה\".</string>
+
+    <string name="challenge_title">נדרש קוד ניהול</string>
+    <string name="challenge_title_admin">ביטול מנהל מכשיר</string>
+    <string name="challenge_title_a11y">ביטול שירות נגישות</string>
+    <string name="challenge_message_uninstall">ניסית להסיר או לפתוח פרטי האפליקציה. הזן קוד ניהול כדי להמשיך (כ־45 שניות).</string>
+    <string name="challenge_message_admin">ניסית לבטל את מנהל המכשיר. הזן קוד ניהול כדי לאשר.</string>
+    <string name="challenge_message_a11y">ניסית לכבות את שירות הנגישות. הזן קוד ניהול כדי לאשר.</string>
+    <string name="challenge_message_manual">הזן קוד ניהול. ייפתח חלון קצר (~45 שנ׳) להסרה / ביטול הגנה. חסימת אפליקציות נשארת.</string>
+    <string name="challenge_continue">המשך</string>
+    <string name="challenge_ok_lease">אומת. יש כ־45 שניות להשלים הסרה/ביטול בהגדרות. אחר כך ההגנה חוזרת. חסימת אפליקציות נשארת.</string>
+    <string name="challenge_admin_warning">כדי לבטל מנהל מכשיר צריך קוד ניהול באפליקציה \"שומר אפליקציות\". בטל כאן רק אחרי אימות שם.</string>
+
+    <string name="allowlist_title">רשימה מותרת</string>
+    <string name="allowlist_hint">סמן אפליקציות משתמש שמותר לפתוח. אפליקציות ותהליכי מערכת תמיד פתוחים. מה שלא מסומן כאן — לא ייפתח.</string>
+    <string name="allowlist_from_setup">סמן אפליקציות משתמש מותרות ולחץ אשר. מערכת תמיד פתוחה; רק מה שתסמן מהרשימה ייפתח בנוסף.</string>
+    <string name="search_apps">חיפוש אפליקציה…</string>
+    <string name="select_all">בחר הכל</string>
+    <string name="deselect_all">בטל הכל</string>
+    <string name="approve">שמור / אשר</string>
+    <string name="reject">דחה</string>
+    <string name="reject_none">לא נבחרו אפליקציות לדחייה</string>
+    <string name="rejected_count">נחסמו %1$d אפליקציות</string>
+    <string name="saved">נשמר</string>
+    <string name="app_pending_label">[חדש] %1$s</string>
+
+    <string name="blocked_title">האפליקציה חסומה</string>
+    <string name="blocked_message">האפליקציה \"%1$s\" לא ברשימה המותרת.</string>
+    <string name="blocked_install_title">התקנה חדשה חסומה</string>
+    <string name="blocked_install_message">ניסיון התקנת אפליקציה חדשה נחסם. אפשר לאשר אותה ברשימה המותרת עם קוד ניהול.</string>
+    <string name="go_home">חזרה למסך הבית</string>
+
+    <string name="protection_active">ההגנה פעילה</string>
+    <string name="device_admin_on">הגנת הסרה פעילה</string>
+    <string name="new_app_blocked_toast">אפליקציה חדשה אינה ברשימה המותרת — לא תיפתח עד שתסמן אותה.</string>
+
+    <string name="step_pin">קוד</string>
+    <string name="step_recovery">שחזור</string>
+    <string name="step_permissions">הרשאות</string>
+    <string name="step_allowlist">רשימה</string>
+    <string name="onboarding_caption">התקנה · שלב %1$d מתוך 4</string>
+    <string name="main_tagline">שליטה מלאה על מה שנפתח במכשיר</string>
+    <string name="main_status_caption">מצב מערכת</string>
+    <string name="main_actions_caption">פעולות</string>
+    <string name="setup_step_caption">הפעל כל הרשאה קריטית</string>
+    <string name="pin_step_caption">בחר קוד שיגן על ההגדרות</string>
+    <string name="recovery_step_caption">שמור גיבוי לפני שממשיכים</string>
+    <string name="allowlist_step_caption">בחר מה מותר — ואשר</string>
+</resources>
