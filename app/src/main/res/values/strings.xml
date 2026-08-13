@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">שומר אפליקציות</string>
+    <string name="app_version_label">גרסה %1$s</string>
     <string name="device_admin_description">מנהל המכשיר מקשיח הסרה. כדי להסיר – היכנס עם קוד הניהול ושחרר את נעילת ההסרה בהגדרות.</string>
     <string name="accessibility_service_description">עוקב אחרי פתיחת אפליקציות, חוסם יישומים שלא ברשימה המותרת, וחוסם ניסיונות הסרה או ביטול הגנה.</string>
 
