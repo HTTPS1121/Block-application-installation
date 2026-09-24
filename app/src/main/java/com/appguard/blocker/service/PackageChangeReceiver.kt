@@ -36,10 +36,8 @@ class PackageChangeReceiver : BroadcastReceiver() {
                 prefs.clearRecentlyInstalled(pkg)
 
                 if (!prefs.allowlistEnabled) return
+                // Stay on the current screen. HOME only if this package itself is opened later.
                 Toast.makeText(context, R.string.new_app_blocked_toast, Toast.LENGTH_LONG).show()
-                if (prefs.shouldBlockPackage(pkg)) {
-                    BlockCoordinator.blockApp(context, pkg)
-                }
             }
 
             Intent.ACTION_PACKAGE_REMOVED -> {

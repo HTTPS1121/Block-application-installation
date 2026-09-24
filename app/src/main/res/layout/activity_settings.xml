@@ -42,10 +42,14 @@
                         android:text="@string/change_pin" />
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/currentPinLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:hint="@string/current_pin">
+                        android:hint="@string/current_pin"
+                        app:endIconContentDescription="@string/show_pin_hold"
+                        app:endIconDrawable="@drawable/ic_visibility"
+                        app:endIconMode="custom">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/currentPin"
@@ -56,10 +60,14 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/newPinLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:hint="@string/new_pin">
+                        android:hint="@string/new_pin"
+                        app:endIconContentDescription="@string/show_pin_hold"
+                        app:endIconDrawable="@drawable/ic_visibility"
+                        app:endIconMode="custom">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/newPin"
@@ -70,10 +78,14 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/confirmPinLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:hint="@string/confirm_new_pin">
+                        android:hint="@string/confirm_new_pin"
+                        app:endIconContentDescription="@string/show_pin_hold"
+                        app:endIconDrawable="@drawable/ic_visibility"
+                        app:endIconMode="custom">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/confirmPin"

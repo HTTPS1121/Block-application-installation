@@ -81,6 +81,10 @@
     <string name="confirm_new_pin">אישור קוד חדש</string>
     <string name="save_pin">שמור קוד</string>
     <string name="pin_changed">הקוד עודכן</string>
+    <string name="show_pin_hold">הצג קוד כל עוד לוחצים</string>
+    <string name="pin_remember_question">האם אתה זוכר את הסיסמה החדשה שהיא:</string>
+    <string name="pin_remember_yes">כן, אני זוכר</string>
+    <string name="pin_remember_back">רגע, לחזור אחורה</string>
     <string name="unlock_uninstall_title">שחרור נעילת הסרה</string>
     <string name="unlock_uninstall_desc">רק נעילת ההסרה תיפתח. חסימת אפליקציות/התקנות תישאר פעילה.</string>
     <string name="unlock_uninstall">שחרר נעילת הסרה (דורש קוד)</string>

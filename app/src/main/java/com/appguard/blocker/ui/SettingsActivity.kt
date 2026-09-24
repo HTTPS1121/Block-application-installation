@@ -1,6 +1,13 @@
 package com.appguard.blocker.ui
 
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.method.PasswordTransformationMethod
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.appguard.blocker.R
@@ -10,6 +17,7 @@ import com.appguard.blocker.databinding.ActivitySettingsBinding
 import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.protection.TamperReason
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class SettingsActivity : SecureActivity() {
 
@@ -25,7 +33,17 @@ class SettingsActivity : SecureActivity() {
         binding.btnSavePin.setOnClickListener { changePin() }
         binding.btnUnlockUninstall.setOnClickListener { confirmUnlock() }
         binding.btnRelockUninstall.setOnClickListener { relock() }
+        attachHoldToReveal(binding.currentPinLayout, binding.currentPin)
+        attachHoldToReveal(binding.newPinLayout, binding.newPin)
+        attachHoldToReveal(binding.confirmPinLayout, binding.confirmPin)
         refreshUnlockState()
+    }
+
+    override fun onPause() {
+        setPinRevealed(binding.currentPin, false)
+        setPinRevealed(binding.newPin, false)
+        setPinRevealed(binding.confirmPin, false)
+        super.onPause()
     }
 
     override fun onResume() {
@@ -61,6 +79,69 @@ class SettingsActivity : SecureActivity() {
             Toast.makeText(this, R.string.pin_mismatch, Toast.LENGTH_SHORT).show()
             return
         }
+        confirmRememberPin(newPin)
+    }
+
+    /** Press-and-hold the eye: show digits. Release: circles again. */
+    private fun attachHoldToReveal(layout: TextInputLayout, field: TextInputEditText) {
+        layout.post {
+            val endIcon = layout.findViewById<View>(
+                com.google.android.material.R.id.text_input_end_icon
+            ) ?: return@post
+            endIcon.setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        setPinRevealed(field, true)
+                        true
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        setPinRevealed(field, false)
+                        true
+                    }
+                    MotionEvent.ACTION_MOVE -> true
+                    else -> false
+                }
+            }
+        }
+    }
+
+    private fun setPinRevealed(field: TextInputEditText, revealed: Boolean) {
+        val hidden = field.transformationMethod is PasswordTransformationMethod
+        if (revealed == !hidden) return
+        val sel = field.selectionStart
+        field.transformationMethod =
+            if (revealed) null else PasswordTransformationMethod.getInstance()
+        val len = field.text?.length ?: 0
+        if (sel in 0..len) field.setSelection(sel)
+    }
+
+    private fun confirmRememberPin(newPin: String) {
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            setPadding(pad, pad / 2, pad, 0)
+        }
+        container.addView(TextView(this).apply {
+            text = getString(R.string.pin_remember_question)
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
+        })
+        container.addView(TextView(this).apply {
+            text = newPin
+            gravity = Gravity.CENTER
+            setPadding(0, pad / 2, 0, 0)
+            textSize = 28f
+            typeface = Typeface.MONOSPACE
+            setTextIsSelectable(false)
+        })
+        AlertDialog.Builder(this)
+            .setView(container)
+            .setPositiveButton(R.string.pin_remember_yes) { _, _ -> applyNewPin(newPin) }
+            .setNegativeButton(R.string.pin_remember_back, null)
+            .show()
+    }
+
+    private fun applyNewPin(newPin: String) {
         prefs.setPin(newPin)
         binding.currentPin.text?.clear()
         binding.newPin.text?.clear()
