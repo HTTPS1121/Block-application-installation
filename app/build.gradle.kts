@@ -10,8 +10,8 @@ android {
         applicationId = "com.appguard.blocker"
         minSdk = 26
         targetSdk = 37
-        versionCode = 34
-        versionName = "1.5.8"
+        versionCode = 36
+        versionName = "1.5.10"
     }
 
     buildTypes {

@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.widget.doAfterTextChanged
 import com.appguard.blocker.R
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
@@ -36,6 +37,8 @@ class SettingsActivity : SecureActivity() {
         attachHoldToReveal(binding.currentPinLayout, binding.currentPin)
         attachHoldToReveal(binding.newPinLayout, binding.newPin)
         attachHoldToReveal(binding.confirmPinLayout, binding.confirmPin)
+        binding.currentPin.doAfterTextChanged { refreshNewPinFields() }
+        refreshNewPinFields()
         refreshUnlockState()
     }
 
@@ -62,12 +65,27 @@ class SettingsActivity : SecureActivity() {
             if (unlocked) android.view.View.VISIBLE else android.view.View.GONE
     }
 
+    /** New PIN fields stay off until the current PIN matches. */
+    private fun refreshNewPinFields() {
+        val ok = prefs.verifyPin(binding.currentPin.text?.toString().orEmpty())
+        binding.newPinLayout.isEnabled = ok
+        binding.confirmPinLayout.isEnabled = ok
+        binding.newPin.isEnabled = ok
+        binding.confirmPin.isEnabled = ok
+        binding.btnSavePin.isEnabled = ok
+        if (!ok) {
+            binding.newPin.text?.clear()
+            binding.confirmPin.text?.clear()
+        }
+    }
+
     private fun changePin() {
         val current = binding.currentPin.text?.toString().orEmpty()
         val newPin = binding.newPin.text?.toString().orEmpty()
         val confirm = binding.confirmPin.text?.toString().orEmpty()
 
         if (!prefs.verifyPin(current)) {
+            refreshNewPinFields()
             Toast.makeText(this, R.string.pin_wrong, Toast.LENGTH_SHORT).show()
             return
         }
