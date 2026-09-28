@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
@@ -211,7 +213,130 @@ class PrefsRepository(context: Context) {
     fun shouldBlockPackage(packageName: String): Boolean {
         if (isAlwaysOpen(packageName)) return false
         if (!allowlistEnabled) return false
+        val sig = SigningCerts.sha256(appContext, packageName)
+        if (sig != null && signatureStatus(sig) == SignatureStatus.REJECTED) return true
         return !getAllowedPackages().contains(packageName)
+    }
+
+    fun signatureStatus(sha256: String): SignatureStatus? = signatureRecord(sha256)?.status
+
+    fun signatureRecord(sha256: String): SignatureRecord? =
+        synchronized(signatureLock) { readSignatures().find { it.sha256 == sha256 } }
+
+    fun signatures(status: SignatureStatus): List<SignatureRecord> =
+        synchronized(signatureLock) {
+            readSignatures().filter { it.status == status }.sortedBy { it.label.lowercase() }
+        }
+
+    fun putSignature(sha256: String, packageName: String, label: String, status: SignatureStatus) {
+        synchronized(signatureLock) {
+            val list = readSignatures().filterNot { it.sha256 == sha256 }.toMutableList()
+            list.add(SignatureRecord(sha256, packageName, label, status))
+            writeSignatures(list)
+        }
+    }
+
+    /**
+     * Removes the decision. A whitelist entry also drops the package from the
+     * runtime allowlist so a deleted approval stops opening immediately.
+     */
+    fun deleteSignature(sha256: String) {
+        val removed = synchronized(signatureLock) {
+            val list = readSignatures()
+            val hit = list.find { it.sha256 == sha256 }
+            writeSignatures(list.filterNot { it.sha256 == sha256 })
+            hit
+        } ?: return
+        if (removed.status == SignatureStatus.WHITE) {
+            val pkgs = SigningCerts.installedPackagesWithSignature(appContext, sha256).toMutableSet()
+            pkgs.add(removed.packageName)
+            blockPackages(pkgs)
+        }
+    }
+
+    /** Installed apps already on the allowlist keep their signature after an upgrade. */
+    fun backfillWhitelistFromAllowedPackages() {
+        val allowed = getAllowedPackages()
+        for (pkg in allowed) {
+            if (isAlwaysOpen(pkg)) continue
+            val sig = SigningCerts.sha256(appContext, pkg) ?: continue
+            val current = signatureStatus(sig)
+            if (current == SignatureStatus.REJECTED) {
+                blockPackages(listOf(pkg))
+                continue
+            }
+            if (current == null) {
+                putSignature(sig, pkg, SigningCerts.label(appContext, pkg), SignatureStatus.WHITE)
+            }
+        }
+    }
+
+    /**
+     * Checked installed apps become whitelist signatures.
+     * Unchecking an installed app drops its whitelist entry.
+     * Decisions for apps that are not installed right now stay.
+     */
+    fun syncAllowlistSignatures(installed: List<Triple<String, String, Boolean>>) {
+        synchronized(signatureLock) {
+            val bySig = readSignatures().associateBy { it.sha256 }.toMutableMap()
+            val allowedSigs = mutableSetOf<String>()
+            for ((pkg, label, allowed) in installed) {
+                val sig = SigningCerts.sha256(appContext, pkg) ?: continue
+                if (allowed) {
+                    allowedSigs.add(sig)
+                    bySig[sig] = SignatureRecord(sig, pkg, label, SignatureStatus.WHITE)
+                }
+            }
+            for ((pkg, _, allowed) in installed) {
+                if (allowed) continue
+                val sig = SigningCerts.sha256(appContext, pkg) ?: continue
+                if (sig in allowedSigs) continue
+                if (bySig[sig]?.status == SignatureStatus.WHITE) {
+                    bySig.remove(sig)
+                }
+            }
+            writeSignatures(bySig.values.toList())
+        }
+    }
+
+    private fun readSignatures(): List<SignatureRecord> {
+        val raw = prefs.getString(KEY_SIGNATURES, null) ?: return emptyList()
+        val arr = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+        val out = ArrayList<SignatureRecord>(arr.length())
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            val sha = o.optString("s")
+            val status = when (o.optString("t")) {
+                SignatureStatus.WHITE.name -> SignatureStatus.WHITE
+                SignatureStatus.PENDING.name -> SignatureStatus.PENDING
+                SignatureStatus.REJECTED.name, "BLACK" -> SignatureStatus.REJECTED
+                else -> null
+            }
+            if (sha.isBlank() || status == null) continue
+            out.add(
+                SignatureRecord(
+                    sha256 = sha,
+                    packageName = o.optString("p"),
+                    label = o.optString("l").ifBlank { o.optString("p") },
+                    status = status
+                )
+            )
+        }
+        return out
+    }
+
+    private fun writeSignatures(records: List<SignatureRecord>) {
+        val arr = JSONArray()
+        for (rec in records) {
+            arr.put(
+                JSONObject()
+                    .put("s", rec.sha256)
+                    .put("p", rec.packageName)
+                    .put("l", rec.label)
+                    .put("t", rec.status.name)
+            )
+        }
+        prefs.edit().putString(KEY_SIGNATURES, arr.toString()).apply()
     }
 
     fun protectionActive(): Boolean = allowlistEnabled
@@ -262,6 +387,21 @@ class PrefsRepository(context: Context) {
             .sortedBy { it.second.lowercase() }
     }
 
+    /**
+     * No stored decision, and the app is open: show it in pending again.
+     * White and rejected decisions stay as they are.
+     */
+    fun ensurePendingOnOpen(packageName: String) {
+        if (isAlwaysOpen(packageName)) return
+        val sig = SigningCerts.sha256(appContext, packageName) ?: return
+        if (signatureStatus(sig) != null) return
+        putSignature(sig, packageName, SigningCerts.label(appContext, packageName), SignatureStatus.PENDING)
+    }
+
+    var bulkApproveAsked: Boolean
+        get() = prefs.getBoolean(KEY_BULK_APPROVE_ASKED, false)
+        set(value) = prefs.edit().putBoolean(KEY_BULK_APPROVE_ASKED, value).apply()
+
     var setupCompleted: Boolean
         get() = prefs.getBoolean(KEY_SETUP_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_SETUP_COMPLETED, value).apply()
@@ -283,8 +423,12 @@ class PrefsRepository(context: Context) {
         private const val KEY_ALLOWLIST_ENABLED = "allowlist_enabled"
         private const val KEY_UNINSTALL_UNLOCKED = "uninstall_unlocked"
         private const val KEY_ALLOWED_PACKAGES = "allowed_packages"
+        private const val KEY_SIGNATURES = "signature_decisions"
         private const val KEY_RECENT_INSTALLS = "recent_installs"
+
+        private val signatureLock = Any()
         private const val KEY_SETUP_COMPLETED = "setup_completed"
+        private const val KEY_BULK_APPROVE_ASKED = "bulk_approve_asked"
         private const val KEY_PROTECTION_ARMED = "protection_armed"
         private const val KEY_LAST_VERSION = "last_seen_version_code"
         private const val KEY_CHALLENGE_ACTIVE = "challenge_active"

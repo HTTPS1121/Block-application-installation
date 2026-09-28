@@ -62,6 +62,11 @@
             android:parentActivityName=".ui.MainActivity" />
 
         <activity
+            android:name=".ui.SignatureListsActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MainActivity" />
+
+        <activity
             android:name=".ui.BlockedActivity"
             android:exported="false"
             android:excludeFromRecents="true"

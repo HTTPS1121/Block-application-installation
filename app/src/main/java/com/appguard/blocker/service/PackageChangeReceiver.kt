@@ -6,10 +6,14 @@ import android.content.Intent
 import android.widget.Toast
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.data.SignatureStatus
+import com.appguard.blocker.data.SigningCerts
 
 /**
- * New installs are never auto-added to the allowlist.
- * If protection is on they simply can't open until marked allowed — no "pending" state.
+ * Install decisions are stored by signing certificate.
+ * A whitelist signature is allowed again after uninstall + reinstall.
+ * Unknown signatures land in the pending list and stay closed.
+ * Completing an install does not send the user home.
  */
 class PackageChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -23,22 +27,7 @@ class PackageChangeReceiver : BroadcastReceiver() {
         PrefsRepository.clearSystemFlagCache()
 
         when (action) {
-            Intent.ACTION_PACKAGE_ADDED -> {
-                if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-                // System packages are always open — no toast / no allowlist noise
-                if (prefs.isAlwaysOpen(pkg)) return
-
-                // Ensure new package is not on allowlist
-                val allowed = prefs.getAllowedPackages()
-                if (allowed.remove(pkg)) {
-                    prefs.setAllowedPackages(allowed)
-                }
-                prefs.clearRecentlyInstalled(pkg)
-
-                if (!prefs.allowlistEnabled) return
-                // Stay on the current screen. HOME only if this package itself is opened later.
-                Toast.makeText(context, R.string.new_app_blocked_toast, Toast.LENGTH_LONG).show()
-            }
+            Intent.ACTION_PACKAGE_ADDED -> onPackageAdded(context, prefs, intent, pkg)
 
             Intent.ACTION_PACKAGE_REMOVED -> {
                 if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
@@ -49,5 +38,68 @@ class PackageChangeReceiver : BroadcastReceiver() {
                 prefs.clearRecentlyInstalled(pkg)
             }
         }
+    }
+
+    private fun onPackageAdded(
+        context: Context,
+        prefs: PrefsRepository,
+        intent: Intent,
+        pkg: String
+    ) {
+        if (prefs.isAlwaysOpen(pkg)) return
+
+        val replacing = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
+        val sig = SigningCerts.sha256(context, pkg)
+        val label = SigningCerts.label(context, pkg)
+
+        if (sig == null) {
+            if (!replacing) {
+                removeFromAllowlist(prefs, pkg)
+                if (prefs.allowlistEnabled) {
+                    Toast.makeText(context, R.string.new_app_blocked_toast, Toast.LENGTH_LONG).show()
+                }
+            }
+            return
+        }
+
+        when (prefs.signatureStatus(sig)) {
+            SignatureStatus.WHITE -> {
+                prefs.putSignature(sig, pkg, label, SignatureStatus.WHITE)
+                prefs.allowPackage(pkg)
+            }
+            SignatureStatus.REJECTED -> {
+                prefs.putSignature(sig, pkg, label, SignatureStatus.REJECTED)
+                removeFromAllowlist(prefs, pkg)
+                if (prefs.allowlistEnabled && !replacing) {
+                    Toast.makeText(context, R.string.signature_black_toast, Toast.LENGTH_LONG).show()
+                }
+            }
+            SignatureStatus.PENDING -> {
+                prefs.putSignature(sig, pkg, label, SignatureStatus.PENDING)
+                removeFromAllowlist(prefs, pkg)
+                if (prefs.allowlistEnabled && !replacing) {
+                    Toast.makeText(context, R.string.new_app_blocked_toast, Toast.LENGTH_LONG).show()
+                }
+            }
+            null -> {
+                if (replacing && prefs.isPackageAllowed(pkg)) {
+                    prefs.putSignature(sig, pkg, label, SignatureStatus.WHITE)
+                    return
+                }
+                prefs.putSignature(sig, pkg, label, SignatureStatus.PENDING)
+                removeFromAllowlist(prefs, pkg)
+                if (prefs.allowlistEnabled && !replacing) {
+                    Toast.makeText(context, R.string.new_app_blocked_toast, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun removeFromAllowlist(prefs: PrefsRepository, pkg: String) {
+        val allowed = prefs.getAllowedPackages()
+        if (allowed.remove(pkg)) {
+            prefs.setAllowedPackages(allowed)
+        }
+        prefs.clearRecentlyInstalled(pkg)
     }
 }

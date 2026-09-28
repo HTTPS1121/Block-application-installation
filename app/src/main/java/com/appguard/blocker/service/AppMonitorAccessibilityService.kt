@@ -233,6 +233,7 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         if (AppAccessGuard.mustNotKickGuardian()) return
         // Package installer is exempt from allowlist kicks (uninstall other apps must work).
         // OUR uninstall is handled above by self-protect / isOurUninstallUi.
+        prefs.ensurePendingOnOpen(packageName)
         if (!BlockCoordinator.shouldBlockApp(this, packageName)) return
 
         val now = System.currentTimeMillis()

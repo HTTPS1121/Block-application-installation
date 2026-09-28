@@ -68,6 +68,7 @@ class UsageMonitorService : Service() {
         // HARD RULE: never kick the guardian itself
         if (fg == packageName || fg == PrefsRepository.OUR_PACKAGE) return
         if (PrefsRepository.isCoreExempt(fg)) return
+        prefs.ensurePendingOnOpen(fg)
         if (!BlockCoordinator.shouldBlockApp(this, fg)) return
 
         val now = System.currentTimeMillis()

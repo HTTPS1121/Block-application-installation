@@ -34,6 +34,7 @@
     <string name="level1_title">הגנה</string>
     <string name="level1_desc">רק אפליקציות מסומנות ברשימה המותרת נפתחות. כל השאר חסום.</string>
     <string name="manage_allowlist">ניהול רשימה מותרת</string>
+    <string name="manage_signatures">רשימות לפי חתימה</string>
     <string name="settings">הגדרות</string>
     <string name="required_permissions">הרשאות נדרשות</string>
     <string name="open_setup">הגדרת הרשאות הגנה</string>
@@ -132,7 +133,25 @@
 
     <string name="protection_active">ההגנה פעילה</string>
     <string name="device_admin_on">הגנת הסרה פעילה</string>
-    <string name="new_app_blocked_toast">אפליקציה חדשה אינה ברשימה המותרת — לא תיפתח עד שתסמן אותה.</string>
+    <string name="new_app_blocked_toast">התקנה חדשה ממתינה לאישור — לא תיפתח עד שתאשר אותה ברשימה הממתינה.</string>
+    <string name="sig_lists_title">התקנות לפי חתימה</string>
+    <string name="sig_lists_hint">שתי רשימות: ממתינה ומאושרת. אישור נשמר לפי חתימה, אז התקנה מחדש של אפליקציה שאושרה נפתחת בלי שאלה.</string>
+    <string name="sig_white">מאושרת</string>
+    <string name="sig_pending">ממתינה</string>
+    <string name="sig_approve">אשר</string>
+    <string name="sig_pending_hint">V ירוק מאשר ומעביר למאושרות. X אדום מוחק את הבקשה. כניסה שוב ליישום (הוא לא ייפתח) מחזירה אותו לממתינות.</string>
+    <string name="sig_white_hint">X אדום מוחק את האישור. היישום נחסם מיד. כניסה שוב אליו (הוא לא ייפתח) מחזירה אותו לממתינות.</string>
+    <string name="sig_delete">מחק</string>
+    <string name="sig_delete_pending_title">למחוק את הבקשה?</string>
+    <string name="sig_delete_pending_message">הבקשה תימחק כאילו לא נשלחה. אם היישום עדיין מותקן, כניסה אליו תחזיר אותו לממתינות.</string>
+    <string name="sig_delete_white_title">למחוק את האישור?</string>
+    <string name="sig_delete_white_message">היישום לא יהיה מאושר מעכשיו. כניסה אליו תחזיר אותו לממתינות.</string>
+    <string name="sig_empty_white">אין יישומים מאושרים</string>
+    <string name="sig_empty_pending">אין בקשות ממתינות</string>
+    <string name="approve_all_installed_message">לאשר את כל היישומים המותקנים כעת במכשיר?</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="signature_black_toast">ההתקנה הזו נדחתה.</string>
 
     <string name="step_pin">קוד</string>
     <string name="step_recovery">שחזור</string>

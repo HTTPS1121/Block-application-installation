@@ -9,6 +9,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.appguard.blocker.R
@@ -73,12 +74,35 @@ class AllowlistActivity : SecureActivity() {
         }
 
         loadApps()
+        if (fromSetup && !prefs.bulkApproveAsked) {
+            askApproveAllInstalled()
+        }
+    }
+
+    private fun askApproveAllInstalled() {
+        AlertDialog.Builder(this)
+            .setCancelable(false)
+            .setMessage(R.string.approve_all_installed_message)
+            .setPositiveButton(R.string.yes) { _, _ ->
+                prefs.bulkApproveAsked = true
+                allApps.forEach { it.allowed = true }
+                save()
+            }
+            .setNegativeButton(R.string.no) { _, _ ->
+                prefs.bulkApproveAsked = true
+                allApps.forEach { it.allowed = false }
+                save()
+            }
+            .show()
     }
 
     /** שמור סימונים כרשימה המותרת. מאשר setup → מדליק הגנה. */
     private fun save() {
         val selected = allApps.filter { it.allowed }.map { it.packageName }.toSet()
         prefs.setAllowedPackages(selected)
+        prefs.syncAllowlistSignatures(
+            allApps.map { Triple(it.packageName, it.label, it.allowed) }
+        )
         // Clear obsolete pending tracking
         prefs.getRecentlyInstalled().toList().forEach { prefs.clearRecentlyInstalled(it) }
 

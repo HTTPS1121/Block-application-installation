@@ -99,6 +99,7 @@ class AppGuardApplication : Application() {
         } else if (!prefs.allowlistEnabled && prefs.protectionArmed) {
             prefs.protectionArmed = false
         }
+        runCatching { prefs.backfillWhitelistFromAllowedPackages() }
         if (prefs.allowlistEnabled) {
             runCatching { UsageMonitorService.start(this) }
         }

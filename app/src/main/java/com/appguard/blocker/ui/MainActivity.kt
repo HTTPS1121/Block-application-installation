@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.data.SignatureStatus
 import com.appguard.blocker.databinding.ActivityMainBinding
 import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.service.UsageMonitorService
@@ -30,6 +31,9 @@ class MainActivity : SecureActivity() {
         }
         binding.btnAllowlist.setOnClickListener {
             startActivity(Intent(this, AllowlistActivity::class.java))
+        }
+        binding.btnSignatures.setOnClickListener {
+            startActivity(Intent(this, SignatureListsActivity::class.java))
         }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -121,7 +125,9 @@ class MainActivity : SecureActivity() {
     private fun refreshCounters() {
         binding.allowlistCount.text =
             getString(R.string.allowlist_count, prefs.getAllowedPackages().size)
-        binding.pendingCount.visibility = View.GONE
+        val pending = prefs.signatures(SignatureStatus.PENDING).size
+        binding.pendingCount.visibility = if (pending > 0) View.VISIBLE else View.GONE
+        binding.pendingCount.text = getString(R.string.pending_count, pending)
     }
 
     private fun appVersionName(): String =
