@@ -173,19 +173,11 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAllowlist"
+                        android:id="@+id/btnSignatures"
                         style="@style/Widget.AppGuard.Button.Tonal"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="@string/manage_allowlist" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSignatures"
-                        style="@style/Widget.AppGuard.Button.Outlined"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="@string/manage_signatures" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

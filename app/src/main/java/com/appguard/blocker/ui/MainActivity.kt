@@ -29,9 +29,6 @@ class MainActivity : SecureActivity() {
         binding.btnSetupPermissions.setOnClickListener {
             startActivity(Intent(this, SetupActivity::class.java))
         }
-        binding.btnAllowlist.setOnClickListener {
-            startActivity(Intent(this, AllowlistActivity::class.java))
-        }
         binding.btnSignatures.setOnClickListener {
             startActivity(Intent(this, SignatureListsActivity::class.java))
         }
