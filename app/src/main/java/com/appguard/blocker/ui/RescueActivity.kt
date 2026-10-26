@@ -14,6 +14,7 @@ class RescueActivity : Activity() {
         super.onCreate(savedInstanceState)
         runCatching {
             ProtectionController.disarm(this)
+            com.appguard.blocker.dns.PrivateDnsEnforcer.unlock(this)
             DeviceAdminHelper.removeAdmin(this)
             UsageMonitorService.stop(this)
             PrefsRepository(this).challengeActive = false

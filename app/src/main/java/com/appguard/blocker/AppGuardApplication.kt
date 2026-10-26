@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.dns.PrivateDnsEnforcer
 import com.appguard.blocker.protection.AppAccessGuard
 import com.appguard.blocker.service.PackageChangeReceiver
 import com.appguard.blocker.service.UsageMonitorService
@@ -25,6 +26,7 @@ class AppGuardApplication : Application() {
         // Material You — wallpaper palette on API 31+ (same idea as ReVanced dynamic color)
         DynamicColors.applyToActivitiesIfAvailable(this)
         AppAccessGuard.reset()
+        PrivateDnsEnforcer.sync(this)
 
         runCatching {
             val prefs = PrefsRepository(this)

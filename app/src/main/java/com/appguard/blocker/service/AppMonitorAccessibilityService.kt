@@ -6,6 +6,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.Toast
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.protection.AppAccessGuard
@@ -31,6 +32,12 @@ class AppMonitorAccessibilityService : AccessibilityService() {
     private var serviceConnectedAt = 0L
     private var uninstallChainRunning = false
     private var settingsWatchUntil = 0L
+    private var dnsWatchUntil = 0L
+    private var dnsBacks = 0
+    private var dnsBackWindowStart = 0L
+    private var dnsCooldownUntil = 0L
+    private var lastDnsBackAt = 0L
+    private var lastDnsToastAt = 0L
 
     /** Settings: keep BACKing while still on Admin / A11y / our App Info (Kaspersky pattern). */
     private val settingsThreatWatch = object : Runnable {
@@ -91,12 +98,87 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         }
     }
 
+    /** Editor only. No PIN and no uninstall lease, so a correct PIN cannot open system DNS. */
+    private val dnsPageWatch = object : Runnable {
+        override fun run() {
+            try {
+                if (System.currentTimeMillis() > dnsWatchUntil) return
+                if (!dnsGuardArmed()) return
+                val root = rootInActiveWindow ?: return
+                val pkg = root.packageName?.toString().orEmpty()
+                if (!TamperDetectors.isSettings(pkg)) return
+                if (!TamperDetectors.isPrivateDnsEditor("", root, pkg)) return
+                kickPrivateDns()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun isDnsRelevantEvent(type: Int): Boolean =
+        type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+            type == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
+            type == AccessibilityEvent.TYPE_VIEW_CLICKED
+
+    private fun dnsGuardArmed(): Boolean {
+        if (!::prefs.isInitialized) return false
+        if (!prefs.dnsLockEnabled || !prefs.setupCompleted) return false
+        if (AppAccessGuard.isGuardianInForeground()) return false
+        if (AppAccessGuard.isChallengeUiShowing()) return false
+        return true
+    }
+
+    private fun guardPrivateDns(packageName: String, className: String): Boolean {
+        if (!dnsGuardArmed()) return false
+        if (!TamperDetectors.isSettings(packageName)) return false
+        val root = rootInActiveWindow ?: return false
+        if (!TamperDetectors.isPrivateDnsEditor(className, root, packageName)) {
+            dnsBacks = 0
+            return false
+        }
+        kickPrivateDns()
+        return true
+    }
+
+    /** @return false when backing must stop (cooldown). */
+    private fun kickPrivateDns(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now < dnsCooldownUntil) return false
+        if (now - dnsBackWindowStart > 15_000L) {
+            dnsBacks = 0
+            dnsBackWindowStart = now
+        }
+        if (dnsBacks >= 6) {
+            dnsCooldownUntil = now + 20_000L
+            dnsBacks = 0
+            return false
+        }
+        if (now - lastDnsBackAt < 350L) {
+            dnsWatchUntil = now + 8_000L
+            handler.removeCallbacks(dnsPageWatch)
+            handler.postDelayed(dnsPageWatch, 400)
+            return false
+        }
+        dnsBacks++
+        lastDnsBackAt = now
+        performGlobalAction(GLOBAL_ACTION_BACK)
+        if (now - lastDnsToastAt > 4_000L) {
+            lastDnsToastAt = now
+            Toast.makeText(this, R.string.dns_blocked_toast, Toast.LENGTH_SHORT).show()
+        }
+        dnsWatchUntil = now + 8_000L
+        handler.removeCallbacks(dnsPageWatch)
+        handler.postDelayed(dnsPageWatch, 400)
+        return true
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         prefs = PrefsRepository(this)
         instance = this
         serviceConnectedAt = SystemClock.uptimeMillis()
         TamperDetectors.warmUp(this)
+        com.appguard.blocker.dns.PrivateDnsEnforcer.sync(this)
         if (prefs.protectionActive()) {
             UsageMonitorService.start(this)
         }
@@ -127,6 +209,8 @@ class AppMonitorAccessibilityService : AccessibilityService() {
         if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             TamperDetectors.noteWindowClass(packageName, classNameEarly)
         }
+
+        if (isDnsRelevantEvent(type) && guardPrivateDns(packageName, classNameEarly)) return
 
         val selfProtect = AppAccessGuard.mayRunSelfProtect(this)
 

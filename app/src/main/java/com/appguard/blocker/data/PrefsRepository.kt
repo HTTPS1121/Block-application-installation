@@ -266,6 +266,41 @@ class PrefsRepository(context: Context) {
         get() = prefs.getBoolean(KEY_SETUP_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_SETUP_COMPLETED, value).apply()
 
+    var dnsLockEnabled: Boolean
+        get() = prefs.getBoolean(KEY_DNS_LOCK, false)
+        set(value) = prefs.edit().putBoolean(KEY_DNS_LOCK, value).apply()
+
+    var dnsMode: String
+        get() = prefs.getString(KEY_DNS_MODE, "opportunistic") ?: "opportunistic"
+        set(value) = prefs.edit().putString(KEY_DNS_MODE, value).apply()
+
+    var dnsHost: String
+        get() = prefs.getString(KEY_DNS_HOST, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_DNS_HOST, value).apply()
+
+    fun hasDnsSnapshot(): Boolean = prefs.contains(KEY_DNS_PREV_MODE)
+
+    fun dnsSnapshot(): Pair<String, String>? {
+        if (!hasDnsSnapshot()) return null
+        val mode = prefs.getString(KEY_DNS_PREV_MODE, "opportunistic") ?: "opportunistic"
+        val host = prefs.getString(KEY_DNS_PREV_HOST, "") ?: ""
+        return mode to host
+    }
+
+    fun setDnsSnapshot(mode: String, host: String) {
+        prefs.edit()
+            .putString(KEY_DNS_PREV_MODE, mode)
+            .putString(KEY_DNS_PREV_HOST, host)
+            .apply()
+    }
+
+    fun clearDnsSnapshot() {
+        prefs.edit()
+            .remove(KEY_DNS_PREV_MODE)
+            .remove(KEY_DNS_PREV_HOST)
+            .apply()
+    }
+
     private fun hashPin(pin: String, salt: ByteArray): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(salt)
@@ -294,6 +329,11 @@ class PrefsRepository(context: Context) {
         private const val KEY_LEASE_EXPIRES = "removal_lease_expires"
         private const val KEY_LEASE_EXPIRES_ELAPSED = "removal_lease_expires_elapsed"
         private const val KEY_LEASE_NONCE = "removal_lease_nonce"
+        private const val KEY_DNS_LOCK = "dns_lock_enabled"
+        private const val KEY_DNS_MODE = "dns_mode"
+        private const val KEY_DNS_HOST = "dns_host"
+        private const val KEY_DNS_PREV_MODE = "dns_prev_mode"
+        private const val KEY_DNS_PREV_HOST = "dns_prev_host"
 
         const val PLAY_STORE = "com.android.vending"
         const val OUR_LABEL = "שומר אפליקציות"

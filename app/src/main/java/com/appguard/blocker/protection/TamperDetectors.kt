@@ -19,6 +19,18 @@ import com.appguard.blocker.util.ForeignStrings
  */
 object TamperDetectors {
 
+    private val PRIVATE_DNS_EDITOR_PHRASES = listOf(
+        "Private DNS provider hostname",
+        "Enter hostname of DNS provider",
+        "Select Private DNS Mode",
+        "DNS provider hostname",
+        "שם מארח של ספק DNS פרטי",
+        "שם המארח של ספק ה-DNS",
+        "יש להזין את שם המארח של ספק",
+        "יש להזין שם מארח של ספק DNS",
+        "הזן שם מארח של ספק DNS"
+    )
+
     @Volatile
     private var appDetailsComponent: ComponentName? = null
 
@@ -368,6 +380,65 @@ object TamperDetectors {
         }
         return nodeWithText(root, "Use service") ||
             nodeWithText(root, "השתמש בשירות")
+    }
+
+    /**
+     * Private DNS editor only. The Network dashboard row titled "Private DNS" is not enough:
+     * that page also has Wi-Fi and must stay usable.
+     */
+    fun isPrivateDnsEditor(
+        eventClass: String,
+        root: AccessibilityNodeInfo?,
+        eventPackage: String = ""
+    ): Boolean {
+        if (root == null) return false
+        val pkg = eventPackage.lowercase().ifBlank {
+            root.packageName?.toString().orEmpty().lowercase()
+        }
+        if (!isSettings(pkg)) return false
+        val className = effectiveClass(eventClass).lowercase()
+        val byId = treeHasIdPart(root, "private_dns_mode_provider") ||
+            treeHasIdPart(root, "private_dns_radio_group") ||
+            treeHasIdPart(root, "private_dns_mode_provider_hostname")
+        if (byId) return true
+        if (className.contains("privatedns") && !looksLikeNetworkDashboard(root)) return true
+        if (isSettingsSearchUi(eventClass, root, eventPackage)) return false
+        if (isAllAppsListUi(eventClass, root, eventPackage)) return false
+        if (looksLikeNetworkDashboard(root)) return false
+        return PRIVATE_DNS_EDITOR_PHRASES.any { nodeWithText(root, it) }
+    }
+
+    private fun looksLikeNetworkDashboard(root: AccessibilityNodeInfo): Boolean {
+        val joined = collectJoined(root)
+        val markers = listOf(
+            "wi-fi", "wi‑fi", "wlan", "hotspot", "airplane",
+            "אינטרנט אלחוטי", "נקודת גישה", "מצב טיסה"
+        )
+        return markers.count { joined.contains(it) } >= 2
+    }
+
+    private fun treeHasIdPart(root: AccessibilityNodeInfo, part: String): Boolean {
+        val needle = part.lowercase()
+        return try {
+            fun walk(node: AccessibilityNodeInfo, depth: Int): Boolean {
+                if (depth > 14) return false
+                val id = node.viewIdResourceName?.lowercase().orEmpty()
+                if (id.contains(needle)) return true
+                val count = node.childCount.coerceAtMost(40)
+                for (i in 0 until count) {
+                    val child = node.getChild(i) ?: continue
+                    try {
+                        if (walk(child, depth + 1)) return true
+                    } finally {
+                        A11yNodes.recycleQuietly(child)
+                    }
+                }
+                return false
+            }
+            walk(root, 0)
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun effectiveClass(eventClass: String): String {

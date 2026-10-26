@@ -3,7 +3,7 @@
     <string name="app_name">שומר אפליקציות</string>
     <string name="app_version_label">גרסה %1$s</string>
     <string name="device_admin_description">מנהל המכשיר מקשיח הסרה. כדי להסיר – היכנס עם קוד הניהול ושחרר את נעילת ההסרה בהגדרות.</string>
-    <string name="accessibility_service_description">עוקב אחרי פתיחת אפליקציות, חוסם יישומים שלא ברשימה המותרת, וחוסם ניסיונות הסרה או ביטול הגנה.</string>
+    <string name="accessibility_service_description">עוקב אחרי פתיחת אפליקציות, חוסם יישומים שלא ברשימה המותרת, חוסם ניסיונות הסרה או ביטול הגנה, וסוגר את מסך עריכת ה-DNS כשהנעילה דלוקה.</string>
 
     <string name="pin_title">קוד ניהול</string>
     <string name="pin_setup_title">הגדרת קוד ניהול</string>
@@ -142,4 +142,35 @@
     <string name="pin_step_caption">בחר קוד שיגן על ההגדרות</string>
     <string name="recovery_step_caption">שמור גיבוי לפני שממשיכים</string>
     <string name="allowlist_step_caption">בחר מה מותר — ואשר</string>
+
+    <string name="dns_title">DNS</string>
+    <string name="dns_desc">כאן קובעים את ה-DNS של הפון. אחרי נעילה, מסך העריכה בהגדרות נסגר לבד. השורה עצמה נשארת. בלי פקודת המחשב האפליקציה לא יכולה לכתוב את הערך בפון. דפדפן עם DNS משלו (כמו Chrome) לא מתחשב בזה.</string>
+    <string name="dns_phone_now">בפון עכשיו: %1$s</string>
+    <string name="dns_value_off">כבוי</string>
+    <string name="dns_value_auto">אוטומטי</string>
+    <string name="dns_value_host_empty">שרת בלי שם</string>
+    <string name="dns_mode_off">כבוי</string>
+    <string name="dns_mode_auto">אוטומטי</string>
+    <string name="dns_mode_host">שרת מסוים (שם, לא IP)</string>
+    <string name="dns_host_hint">שם שרת, למשל dns.google</string>
+    <string name="dns_preset_cloudflare">Cloudflare</string>
+    <string name="dns_preset_google">Google</string>
+    <string name="dns_preset_quad9">Quad9</string>
+    <string name="dns_preset_adguard">AdGuard</string>
+    <string name="dns_apply">החל על הפון ונעל</string>
+    <string name="dns_unlock">בטל נעילה והחזר מה שהיה</string>
+    <string name="dns_lock_on">נעול. שינוי רק מכאן.</string>
+    <string name="dns_lock_off">לא נעול.</string>
+    <string name="dns_perm_ok">יש הרשאה לכתוב את ה-DNS בפון.</string>
+    <string name="dns_perm_missing">אין עדיין הרשאת כתיבה. פעם אחת מהמחשב, אחרי ניפוי USB:</string>
+    <string name="dns_copy_adb">העתק פקודה</string>
+    <string name="dns_adb_copied">הפקודה הועתקה</string>
+    <string name="dns_applied">ה-DNS בפון עודכן וננעל</string>
+    <string name="dns_saved_no_write">נשמר באפליקציה, אבל הפון לא השתנה. חסרה פקודת המחשב.</string>
+    <string name="dns_bad_host">שם שרת לא תקין. צריך שם כמו dns.google, לא כתובת כמו 8.8.8.8.</string>
+    <string name="dns_write_failed">הפון סירב לכתוב את ה-DNS</string>
+    <string name="dns_unsupported">הפון הזה ישן מדי בשביל DNS פרטי (צריך אנדרואיד 9 ומעלה)</string>
+    <string name="dns_unlocked">הנעילה בוטלה והערך הקודם הוחזר</string>
+    <string name="dns_unlock_no_write">הנעילה בוטלה. בלי הרשאת כתיבה אי אפשר להחזיר את ה-DNS הקודם.</string>
+    <string name="dns_blocked_toast">שינוי DNS חסום. רק מתוך שומר אפליקציות.</string>
 </resources>

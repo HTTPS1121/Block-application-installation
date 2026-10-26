@@ -21,5 +21,6 @@ class BootReceiver : BroadcastReceiver() {
         if (prefs.allowlistEnabled) {
             UsageMonitorService.start(context)
         }
+        com.appguard.blocker.dns.PrivateDnsEnforcer.sync(context)
     }
 }

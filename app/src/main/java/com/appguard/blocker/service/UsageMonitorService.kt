@@ -41,6 +41,7 @@ class UsageMonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         prefs = PrefsRepository(this)
+        com.appguard.blocker.dns.PrivateDnsEnforcer.sync(this)
         createChannel()
         startAsForeground()
         handler.post(tick)
