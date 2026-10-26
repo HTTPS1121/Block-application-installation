@@ -7,11 +7,13 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/pin.png" width="200" alt="מסך הכניסה">
-  <img src="docs/images/main.png" width="200" alt="המסך הראשי">
-  <img src="docs/images/settings.png" width="200" alt="הגדרות DNS">
+  <img src="docs/images/pin.png" width="160" alt="מסך הכניסה">
+  <img src="docs/images/main.png" width="160" alt="המסך הראשי">
+  <img src="docs/images/allowlist.png" width="160" alt="רשימה מותרת">
+  <img src="docs/images/settings.png" width="160" alt="הגדרות DNS">
+  <img src="docs/images/settings-more.png" width="160" alt="קוד והסרה">
   <br>
-  <sub>כניסה · ראשי · DNS</sub>
+  <sub>כניסה · ראשי · רשימה · DNS · קוד</sub>
 </p>
 
 אפליקציה ל-Pixel. נפתח רק מה שסומן ברשימה, ועל הדרך אי אפשר לשנות את ה-DNS מההגדרות של הפון.
