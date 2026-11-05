@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Animation.AppGuard.None" parent="@android:style/Animation">
+        <item name="android:activityOpenEnterAnimation">@anim/no_anim</item>
+        <item name="android:activityOpenExitAnimation">@anim/no_anim</item>
+        <item name="android:activityCloseEnterAnimation">@anim/no_anim</item>
+        <item name="android:activityCloseExitAnimation">@anim/no_anim</item>
+    </style>
+</resources>

@@ -3,21 +3,21 @@ package com.appguard.blocker.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import com.appguard.blocker.R
-import com.appguard.blocker.databinding.ActivityBlockedBinding
+import com.appguard.blocker.ui.compose.screens.BlockedScreen
+import com.appguard.blocker.data.PrefsRepository
+import com.appguard.blocker.ui.compose.theme.AppGuardActivityContent
 
 class BlockedActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityBlockedBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        binding = ActivityBlockedBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        SecureActivity.applyInsets(this, binding.root)
 
         val mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_APP
         val pkg = intent.getStringExtra(EXTRA_PACKAGE).orEmpty()
@@ -27,35 +27,35 @@ class BlockedActivity : AppCompatActivity() {
             ).toString()
         }.getOrDefault(pkg)
 
-        when (mode) {
-            MODE_INSTALL -> {
-                binding.blockedTitle.setText(R.string.blocked_install_title)
-                binding.blockedMessage.setText(R.string.blocked_install_message)
-            }
-            MODE_UNINSTALL -> {
-                binding.blockedTitle.setText(R.string.cannot_uninstall_title)
-                binding.blockedMessage.setText(R.string.cannot_uninstall_message)
-            }
-            else -> {
-                binding.blockedTitle.setText(R.string.blocked_title)
-                binding.blockedMessage.text = getString(R.string.blocked_message, label.ifBlank { pkg })
+        val (titleRes, message) = when (mode) {
+            MODE_INSTALL -> R.string.blocked_install_title to getString(R.string.blocked_install_message)
+            MODE_UNINSTALL -> R.string.cannot_uninstall_title to getString(R.string.cannot_uninstall_message)
+            else -> R.string.blocked_title to getString(R.string.blocked_message, label.ifBlank { pkg })
+        }
+
+        val prefs = PrefsRepository(this)
+        setContent {
+            AppGuardActivityContent(themeMode = prefs.appThemeMode) {
+                BlockedScreen(
+                    titleRes = titleRes,
+                    message = message,
+                    onGoHome = { goHome() }
+                )
             }
         }
 
-        binding.btnGoHome.setOnClickListener { goHome() }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                goHome()
-            }
+            override fun handleOnBackPressed() = goHome()
         })
     }
 
     private fun goHome() {
-        val home = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_HOME)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        startActivity(home)
+        startActivity(
+            Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        )
         finish()
     }
 

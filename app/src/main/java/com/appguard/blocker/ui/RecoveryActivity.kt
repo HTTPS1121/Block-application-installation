@@ -1,42 +1,39 @@
 package com.appguard.blocker.ui
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.appguard.blocker.R
+import androidx.core.view.WindowCompat
 import com.appguard.blocker.data.PrefsRepository
-import com.appguard.blocker.databinding.ActivityRecoveryBinding
+import com.appguard.blocker.ui.compose.screens.RecoveryScreen
+import com.appguard.blocker.ui.compose.theme.AppGuardActivityContent
 import com.appguard.blocker.util.AuthSession
-import com.appguard.blocker.util.PermissionHelper
 
 class RecoveryActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityRecoveryBinding
     private lateinit var prefs: PrefsRepository
     private lateinit var shownCode: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
-        binding = ActivityRecoveryBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        SecureActivity.applyInsets(this, binding.root)
+        enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         prefs = PrefsRepository(this)
         AuthSession.unlock()
-
-        // Prefer restored instance / intent — never regenerate on rotation (would overwrite hash)
         shownCode = savedInstanceState?.getString(STATE_CODE)
             ?: intent.getStringExtra(EXTRA_CODE)
             ?: prefs.generateAndStoreRecoveryCode()
         intent.putExtra(EXTRA_CODE, shownCode)
 
-        OnboardingSteps.bind(binding.root, OnboardingSteps.RECOVERY)
-        binding.recoveryCode.text = shownCode
-        binding.btnConfirmShot.setOnClickListener {
-            prefs.recoveryShown = true
-            Toast.makeText(this, R.string.recovery_saved_hint, Toast.LENGTH_LONG).show()
-            continueFlow()
+        setContent {
+            AppGuardActivityContent(themeMode = prefs.appThemeMode) {
+                RecoveryScreen(
+                    prefs = prefs,
+                    code = shownCode,
+                    onDone = { finish() }
+                )
+            }
         }
     }
 
@@ -45,16 +42,6 @@ class RecoveryActivity : AppCompatActivity() {
         if (::shownCode.isInitialized) {
             outState.putString(STATE_CODE, shownCode)
         }
-    }
-
-    private fun continueFlow() {
-        val next = if (!prefs.setupCompleted || !PermissionHelper.criticalReady(this)) {
-            Intent(this, SetupActivity::class.java)
-        } else {
-            Intent(this, MainActivity::class.java)
-        }
-        startActivity(next)
-        finish()
     }
 
     companion object {
