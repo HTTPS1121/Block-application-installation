@@ -66,14 +66,19 @@ class PrefsRepository(context: Context) {
             .apply()
     }
 
-    /** Dev/debug only — temporary «1» quick login; disable via clear short code in settings. */
+    /**
+     * Old debug builds auto-applied short code «1». Missing key means that default was still on.
+     * After [retireDevTempShortCodeOneIfNeeded] the key is written false and stays off.
+     */
     var devTempShortCodeOneActive: Boolean
-        get() = prefs.getBoolean(KEY_DEV_TEMP_SHORT_ONE, true)
+        get() = !prefs.contains(KEY_DEV_TEMP_SHORT_ONE) ||
+            prefs.getBoolean(KEY_DEV_TEMP_SHORT_ONE, false)
         set(value) = prefs.edit().putBoolean(KEY_DEV_TEMP_SHORT_ONE, value).apply()
 
-    fun applyDevTempShortCodeOne() {
-        setShortCode("1")
-        shortCodeLoginEnabled = true
+    fun retireDevTempShortCodeOneIfNeeded() {
+        if (!devTempShortCodeOneActive) return
+        if (verifyShortCode("1")) clearShortCode()
+        devTempShortCodeOneActive = false
     }
 
     fun verifyShortCode(code: String): Boolean {

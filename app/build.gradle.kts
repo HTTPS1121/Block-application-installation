@@ -26,8 +26,8 @@ android {
         applicationId = "com.appguard.blocker"
         minSdk = 26
         targetSdk = 37
-        versionCode = 61
-        versionName = "2.0.14"
+        versionCode = 62
+        versionName = "2.0.15"
     }
 
     signingConfigs {

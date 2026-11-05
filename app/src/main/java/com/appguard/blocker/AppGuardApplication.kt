@@ -15,7 +15,6 @@ import com.appguard.blocker.ui.BlockedActivity
 import com.appguard.blocker.ui.ProtectionChallengeActivity
 import com.appguard.blocker.ui.compose.AppCatalog
 import com.appguard.blocker.util.AuthSession
-import com.appguard.blocker.util.DevAdb
 
 class AppGuardApplication : Application() {
 
@@ -97,9 +96,7 @@ class AppGuardApplication : Application() {
 
         val prefs = PrefsRepository(this)
         runCatching { AppCatalog.attach(this) }
-        if (DevAdb.isDevBuild(this) && prefs.hasPin() && prefs.devTempShortCodeOneActive) {
-            prefs.applyDevTempShortCodeOne()
-        }
+        prefs.retireDevTempShortCodeOneIfNeeded()
         // Keep self-protect flag in sync with the single protection switch
         if (prefs.allowlistEnabled && !prefs.protectionArmed) {
             prefs.protectionArmed = true
