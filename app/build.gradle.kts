@@ -12,18 +12,22 @@ if (hasReleaseKeystore) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
-layout.buildDirectory.set(rootProject.layout.projectDirectory.dir(".build/app5"))
+layout.buildDirectory.set(rootProject.layout.projectDirectory.dir(".build/app6"))
 
 android {
     namespace = "com.appguard.blocker"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "com.appguard.blocker"
         minSdk = 26
         targetSdk = 37
-        versionCode = 60
-        versionName = "2.0.13"
+        versionCode = 61
+        versionName = "2.0.14"
     }
 
     signingConfigs {
@@ -78,14 +82,15 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("androidx.activity:activity-compose:1.9.3")
 
-    val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
+    val composeBom = platform("androidx.compose:compose-bom-alpha:2026.10.00")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3:1.5.0-beta02")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.9")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

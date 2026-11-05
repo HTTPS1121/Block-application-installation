@@ -30,7 +30,7 @@ fun BlockedScreen(
     ) {
         Spacer(Modifier.height(48.dp))
         ConsumerFormBlock {
-            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     stringResource(titleRes),
                     style = MaterialTheme.typography.headlineSmall,

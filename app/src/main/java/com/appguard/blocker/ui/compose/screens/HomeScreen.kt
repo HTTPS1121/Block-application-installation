@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -30,10 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.service.UsageMonitorService
+import com.appguard.blocker.ui.compose.ui.ConsumerGroup
 import com.appguard.blocker.ui.compose.ui.ConsumerLineDivider
 import com.appguard.blocker.ui.compose.ui.ConsumerRow
 import com.appguard.blocker.ui.compose.ui.ConsumerSection
-import com.appguard.blocker.ui.compose.ui.ConsumerStatusPill
 import com.appguard.blocker.ui.compose.ui.ConsumerTopBar
 import com.appguard.blocker.util.PermissionHelper
 
@@ -59,15 +58,20 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         floatingActionButton = {
             if (!allowlistOn) {
-                FloatingActionButton(onClick = {
-                    if (!permissionsReady) {
-                        Toast.makeText(context, R.string.setup_incomplete, Toast.LENGTH_LONG).show()
-                        onOpenPermissions()
-                    } else {
-                        Toast.makeText(context, R.string.full_protection_on, Toast.LENGTH_LONG).show()
-                        onOpenAllowlistSetup()
-                    }
-                }) {
+                FloatingActionButton(
+                    onClick = {
+                        if (!permissionsReady) {
+                            Toast.makeText(context, R.string.setup_incomplete, Toast.LENGTH_LONG).show()
+                            onOpenPermissions()
+                        } else {
+                            Toast.makeText(context, R.string.full_protection_on, Toast.LENGTH_LONG).show()
+                            onOpenAllowlistSetup()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = MaterialTheme.shapes.largeIncreased,
+                ) {
                     Icon(
                         painterResource(R.drawable.ic_m3_shield),
                         contentDescription = null
@@ -82,110 +86,132 @@ fun HomeScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            ConsumerStatusPill(
-                text = if (allowlistOn) {
-                    stringResource(R.string.protection_active)
-                } else {
-                    stringResource(R.string.protection_inactive)
-                },
-                accent = if (allowlistOn) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.error
+            val heroContainer = if (allowlistOn) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.errorContainer
+            }
+            val heroOn = if (allowlistOn) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onErrorContainer
+            }
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = MaterialTheme.shapes.extraLargeIncreased,
+                color = heroContainer
+            ) {
+                Column(Modifier.padding(24.dp)) {
+                    Text(
+                        text = if (allowlistOn) {
+                            stringResource(R.string.protection_active)
+                        } else {
+                            stringResource(R.string.protection_inactive)
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = heroOn
+                    )
+                    Text(
+                        text = stringResource(R.string.allowlist_count, count),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = heroOn,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.main_tagline),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = heroOn.copy(alpha = 0.82f),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
-            )
-            Text(
-                text = stringResource(R.string.allowlist_count, count),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-            )
-            Text(
-                text = stringResource(R.string.main_tagline),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
+            }
 
             if (!permissionsReady) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    shape = RoundedCornerShape(12.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
                     color = MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
                         text = stringResource(R.string.home_perm_banner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(20.dp)
                     )
                 }
             }
 
             ConsumerSection(stringResource(R.string.home_section_control))
-            ConsumerRow(
-                title = stringResource(R.string.level1_title),
-                subtitle = stringResource(R.string.level1_desc),
-                leading = {
-                    Icon(
-                        painterResource(R.drawable.ic_m3_shield),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                trailing = {
-                    Switch(
-                        checked = allowlistOn,
-                        onCheckedChange = { checked ->
-                            if (checked && !permissionsReady) {
-                                Toast.makeText(
-                                    context,
-                                    R.string.setup_incomplete,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                onOpenPermissions()
-                                return@Switch
+            ConsumerGroup {
+                ConsumerRow(
+                    title = stringResource(R.string.level1_title),
+                    subtitle = stringResource(R.string.level1_desc),
+                    leading = {
+                        Icon(
+                            painterResource(R.drawable.ic_m3_shield),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    trailing = {
+                        Switch(
+                            checked = allowlistOn,
+                            onCheckedChange = { checked ->
+                                if (checked && !permissionsReady) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.setup_incomplete,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    onOpenPermissions()
+                                    return@Switch
+                                }
+                                allowlistOn = checked
+                                prefs.allowlistEnabled = checked
+                                prefs.protectionArmed = checked && PermissionHelper.criticalReady(context)
+                                if (prefs.allowlistEnabled && PermissionHelper.usageAccessGranted(context)) {
+                                    UsageMonitorService.start(context)
+                                } else if (!prefs.allowlistEnabled) {
+                                    UsageMonitorService.stop(context)
+                                }
                             }
-                            allowlistOn = checked
-                            prefs.allowlistEnabled = checked
-                            prefs.protectionArmed = checked && PermissionHelper.criticalReady(context)
-                            if (prefs.allowlistEnabled && PermissionHelper.usageAccessGranted(context)) {
-                                UsageMonitorService.start(context)
-                            } else if (!prefs.allowlistEnabled) {
-                                UsageMonitorService.stop(context)
-                            }
-                        }
-                    )
-                }
-            )
-            ConsumerLineDivider()
-            ConsumerRow(
-                title = stringResource(R.string.manage_allowlist),
-                subtitle = stringResource(R.string.settings_allowlist_entry_sub),
-                onClick = onOpenAllowlist,
-                leading = {
-                    Icon(
-                        painterResource(R.drawable.ic_m3_apps),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
+                        )
+                    }
+                )
+                ConsumerLineDivider()
+                ConsumerRow(
+                    title = stringResource(R.string.manage_allowlist),
+                    subtitle = stringResource(R.string.settings_allowlist_entry_sub),
+                    onClick = onOpenAllowlist,
+                    leading = {
+                        Icon(
+                            painterResource(R.drawable.ic_m3_apps),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                )
+            }
 
             ConsumerSection(stringResource(R.string.home_section_more))
-            ConsumerRow(
-                title = stringResource(R.string.settings_all_settings),
-                subtitle = stringResource(R.string.settings_all_settings_sub),
-                onClick = onOpenSettings,
-                leading = {
-                    Icon(
-                        painterResource(R.drawable.ic_m3_settings),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
+            ConsumerGroup {
+                ConsumerRow(
+                    title = stringResource(R.string.settings_all_settings),
+                    subtitle = stringResource(R.string.settings_all_settings_sub),
+                    onClick = onOpenSettings,
+                    leading = {
+                        Icon(
+                            painterResource(R.drawable.ic_m3_settings),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
             Text(

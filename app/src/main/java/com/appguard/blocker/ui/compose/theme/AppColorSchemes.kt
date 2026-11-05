@@ -4,16 +4,12 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-private val seedPrimary = Color(0xFF006C4E)
-private val seedOnPrimary = Color(0xFFFFFFFF)
-private val seedPrimaryContainer = Color(0xFF8AF8CE)
-private val seedOnPrimaryContainer = Color(0xFF002117)
-
 fun appLightColorScheme() = lightColorScheme(
-    primary = seedPrimary,
-    onPrimary = seedOnPrimary,
+    primary = Color(0xFF006C4E),
+    onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFF8AF8CE),
-    onPrimaryContainer = seedOnPrimaryContainer,
+    onPrimaryContainer = Color(0xFF002117),
+    inversePrimary = Color(0xFF6EDDB3),
     secondary = Color(0xFF4D6357),
     onSecondary = Color(0xFFFFFFFF),
     secondaryContainer = Color(0xFFD0E8D9),
@@ -34,11 +30,28 @@ fun appLightColorScheme() = lightColorScheme(
     onSurfaceVariant = Color(0xFF404943),
     outline = Color(0xFF707973),
     outlineVariant = Color(0xFFBFC9C2),
-    surfaceContainer = Color(0xFFEFEFEF),
-    surfaceContainerHigh = Color(0xFFE9E9E9),
-    surfaceContainerHighest = Color(0xFFE3E3E3),
-    surfaceContainerLow = Color(0xFFF5F5F5),
+    inverseSurface = Color(0xFF2E312F),
+    inverseOnSurface = Color(0xFFEFF1ED),
+    surfaceTint = Color(0xFF006C4E),
+    surfaceBright = Color(0xFFFBFDF9),
+    surfaceDim = Color(0xFFD9DBD7),
+    surfaceContainer = Color(0xFFEDEEEB),
+    surfaceContainerHigh = Color(0xFFE7E9E5),
+    surfaceContainerHighest = Color(0xFFE1E3DF),
+    surfaceContainerLow = Color(0xFFF3F5F1),
     surfaceContainerLowest = Color(0xFFFFFFFF),
+    primaryFixed = Color(0xFF8AF8CE),
+    primaryFixedDim = Color(0xFF6EDDB3),
+    onPrimaryFixed = Color(0xFF002117),
+    onPrimaryFixedVariant = Color(0xFF00513C),
+    secondaryFixed = Color(0xFFD0E8D9),
+    secondaryFixedDim = Color(0xFFB4CCBE),
+    onSecondaryFixed = Color(0xFF0A1F16),
+    onSecondaryFixedVariant = Color(0xFF364B40),
+    tertiaryFixed = Color(0xFFC1E8FB),
+    tertiaryFixedDim = Color(0xFFA5CCDF),
+    onTertiaryFixed = Color(0xFF001F29),
+    onTertiaryFixedVariant = Color(0xFF244C5B),
 )
 
 fun appDarkColorScheme() = darkColorScheme(
@@ -46,6 +59,7 @@ fun appDarkColorScheme() = darkColorScheme(
     onPrimary = Color(0xFF003829),
     primaryContainer = Color(0xFF00513C),
     onPrimaryContainer = Color(0xFF8AF8CE),
+    inversePrimary = Color(0xFF006C4E),
     secondary = Color(0xFFB4CCBE),
     onSecondary = Color(0xFF20352A),
     secondaryContainer = Color(0xFF364B40),
@@ -66,17 +80,36 @@ fun appDarkColorScheme() = darkColorScheme(
     onSurfaceVariant = Color(0xFFBFC9C2),
     outline = Color(0xFF89938C),
     outlineVariant = Color(0xFF404943),
+    inverseSurface = Color(0xFFE1E3DF),
+    inverseOnSurface = Color(0xFF191C1A),
+    surfaceTint = Color(0xFF6EDDB3),
+    surfaceBright = Color(0xFF373A38),
+    surfaceDim = Color(0xFF111412),
     surfaceContainer = Color(0xFF1D201E),
     surfaceContainerHigh = Color(0xFF272A28),
     surfaceContainerHighest = Color(0xFF323532),
     surfaceContainerLow = Color(0xFF191C1A),
     surfaceContainerLowest = Color(0xFF0E100F),
+    primaryFixed = Color(0xFF8AF8CE),
+    primaryFixedDim = Color(0xFF6EDDB3),
+    onPrimaryFixed = Color(0xFF002117),
+    onPrimaryFixedVariant = Color(0xFF00513C),
+    secondaryFixed = Color(0xFFD0E8D9),
+    secondaryFixedDim = Color(0xFFB4CCBE),
+    onSecondaryFixed = Color(0xFF0A1F16),
+    onSecondaryFixedVariant = Color(0xFF364B40),
+    tertiaryFixed = Color(0xFFC1E8FB),
+    tertiaryFixedDim = Color(0xFFA5CCDF),
+    onTertiaryFixed = Color(0xFF001F29),
+    onTertiaryFixedVariant = Color(0xFF244C5B),
 )
 
 /** Pure black surfaces for OLED. */
 fun appAmoledColorScheme() = appDarkColorScheme().copy(
     background = Color.Black,
     surface = Color.Black,
+    surfaceDim = Color.Black,
+    surfaceBright = Color(0xFF2A2A2A),
     surfaceContainer = Color(0xFF0A0A0A),
     surfaceContainerHigh = Color(0xFF121212),
     surfaceContainerHighest = Color(0xFF1A1A1A),

@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,15 +42,13 @@ class MainActivity : SecureActivity() {
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
             AppGuardTheme(themeMode = themeMode) {
-                key(themeMode) {
-                    AppGuardNavHost(
-                        prefs = prefs,
-                        versionName = appVersionName(),
-                        refreshTick = refreshTick,
-                        initialRoute = initialRoute,
-                        onThemeChanged = { mode -> themeMode = mode }
-                    )
-                }
+                AppGuardNavHost(
+                    prefs = prefs,
+                    versionName = appVersionName(),
+                    refreshTick = refreshTick,
+                    initialRoute = initialRoute,
+                    onThemeChanged = { mode -> themeMode = mode }
+                )
             }
         }
     }

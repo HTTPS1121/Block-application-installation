@@ -3,4 +3,10 @@
     <style name="Shape.AppGuard.CardHero" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
         <item name="cornerSize">28dp</item>
     </style>
+    <style name="Shape.AppGuard.Group" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">28dp</item>
+    </style>
+    <style name="Shape.AppGuard.Fab" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">20dp</item>
+    </style>
 </resources>

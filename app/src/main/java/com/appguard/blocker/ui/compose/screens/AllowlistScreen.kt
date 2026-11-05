@@ -7,21 +7,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
-import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,7 +37,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -55,6 +56,7 @@ import com.appguard.blocker.ui.compose.ui.ConsumerTopBar
 private enum class AllowlistFilter { ALL, ALLOWED, NOT_ALLOWED, UNINSTALLED }
 private enum class AllowlistViewMode { COMFORTABLE, COMPACT }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllowlistScreen(
     prefs: PrefsRepository,
@@ -145,52 +147,63 @@ fun AllowlistScreen(
             )
             Row(
                 Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
                     selected = filter == AllowlistFilter.ALL,
                     onClick = { filter = AllowlistFilter.ALL },
+                    shape = MaterialTheme.shapes.large,
                     label = { Text(stringResource(R.string.allowlist_filter_all)) }
                 )
                 FilterChip(
                     selected = filter == AllowlistFilter.ALLOWED,
                     onClick = { filter = AllowlistFilter.ALLOWED },
+                    shape = MaterialTheme.shapes.large,
                     label = { Text(stringResource(R.string.allowlist_filter_allowed)) }
                 )
                 FilterChip(
                     selected = filter == AllowlistFilter.NOT_ALLOWED,
                     onClick = { filter = AllowlistFilter.NOT_ALLOWED },
+                    shape = MaterialTheme.shapes.large,
                     label = { Text(stringResource(R.string.allowlist_filter_blocked)) }
                 )
                 if (prefs.rememberApprovalAfterReinstall) {
                     FilterChip(
                         selected = filter == AllowlistFilter.UNINSTALLED,
                         onClick = { filter = AllowlistFilter.UNINSTALLED },
+                        shape = MaterialTheme.shapes.large,
                         label = { Text(stringResource(R.string.allowlist_filter_uninstalled)) }
                     )
                 }
             }
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                FilterChip(
+                SegmentedButton(
                     selected = viewMode == AllowlistViewMode.COMFORTABLE,
                     onClick = { viewMode = AllowlistViewMode.COMFORTABLE },
-                    leadingIcon = { Icon(Icons.Outlined.List, null, Modifier.size(18.dp)) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                     label = { Text(stringResource(R.string.allowlist_view_comfortable)) }
                 )
-                FilterChip(
+                SegmentedButton(
                     selected = viewMode == AllowlistViewMode.COMPACT,
                     onClick = { viewMode = AllowlistViewMode.COMPACT },
-                    leadingIcon = { Icon(Icons.Outlined.ViewAgenda, null, Modifier.size(18.dp)) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                     label = { Text(stringResource(R.string.allowlist_view_compact)) }
                 )
+            }
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 FilterChip(
                     selected = false,
                     onClick = {
                         apps.filter { it.installed }.forEach { overrides[it.packageName] = true }
                     },
+                    shape = MaterialTheme.shapes.large,
                     label = { Text(stringResource(R.string.select_all)) }
                 )
                 FilterChip(
@@ -198,6 +211,7 @@ fun AllowlistScreen(
                     onClick = {
                         apps.filter { it.installed }.forEach { overrides[it.packageName] = false }
                     },
+                    shape = MaterialTheme.shapes.large,
                     label = { Text(stringResource(R.string.deselect_all)) }
                 )
             }
@@ -269,7 +283,9 @@ private fun AllowlistIcon(packageName: String, compact: Boolean) {
         Image(
             bitmap!!,
             contentDescription = null,
-            modifier = Modifier.size(size).clip(RoundedCornerShape(if (compact) 8.dp else 12.dp))
+            modifier = Modifier.size(size).clip(
+                if (compact) MaterialTheme.shapes.small else MaterialTheme.shapes.medium
+            )
         )
     } else {
         Icon(

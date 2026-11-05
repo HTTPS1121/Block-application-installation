@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -29,6 +28,7 @@ import com.appguard.blocker.admin.DeviceAdminHelper
 import com.appguard.blocker.data.PrefsRepository
 import com.appguard.blocker.ui.OnboardingSteps
 import com.appguard.blocker.ui.compose.components.OnboardingRail
+import com.appguard.blocker.ui.compose.ui.ConsumerGroup
 import com.appguard.blocker.ui.compose.ui.ConsumerLineDivider
 import com.appguard.blocker.ui.compose.ui.ConsumerPrimaryButton
 import com.appguard.blocker.ui.compose.ui.ConsumerRow
@@ -161,36 +161,40 @@ private fun PermissionsSetupList(
             )
             ConsumerSection(stringResource(R.string.required_permissions))
         }
-        itemsIndexed(states) { index, state ->
-            PermissionRow(
-                item = state.item,
-                granted = state.granted,
-                onRequest = {
-                    when (state.item) {
-                        PermissionItem.ACCESSIBILITY ->
-                            PermissionHelper.openAccessibility(context)
-                        PermissionItem.USAGE_ACCESS ->
-                            PermissionHelper.openUsageAccess(context)
-                        PermissionItem.DEVICE_ADMIN ->
-                            DeviceAdminHelper.requestEnable(context)
-                        PermissionItem.OVERLAY -> PermissionHelper.openOverlay(context)
-                        PermissionItem.BATTERY_OPTIMIZATION ->
-                            PermissionHelper.openBatteryOptimization(context)
-                        PermissionItem.NOTIFICATIONS ->
-                            notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        PermissionItem.OEM_AUTOSTART ->
-                            if (!OemAutostartHelper.open(context)) {
-                                Toast.makeText(
-                                    context,
-                                    R.string.perm_oem_unavailable,
-                                    Toast.LENGTH_LONG
-                                ).show()
+        item {
+            ConsumerGroup {
+                states.forEachIndexed { index, state ->
+                    PermissionRow(
+                        item = state.item,
+                        granted = state.granted,
+                        onRequest = {
+                            when (state.item) {
+                                PermissionItem.ACCESSIBILITY ->
+                                    PermissionHelper.openAccessibility(context)
+                                PermissionItem.USAGE_ACCESS ->
+                                    PermissionHelper.openUsageAccess(context)
+                                PermissionItem.DEVICE_ADMIN ->
+                                    DeviceAdminHelper.requestEnable(context)
+                                PermissionItem.OVERLAY -> PermissionHelper.openOverlay(context)
+                                PermissionItem.BATTERY_OPTIMIZATION ->
+                                    PermissionHelper.openBatteryOptimization(context)
+                                PermissionItem.NOTIFICATIONS ->
+                                    notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                PermissionItem.OEM_AUTOSTART ->
+                                    if (!OemAutostartHelper.open(context)) {
+                                        Toast.makeText(
+                                            context,
+                                            R.string.perm_oem_unavailable,
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
                             }
-                    }
-                    tick++
+                            tick++
+                        }
+                    )
+                    if (index < states.lastIndex) ConsumerLineDivider()
                 }
-            )
-            if (index < states.lastIndex) ConsumerLineDivider()
+            }
         }
         item {
             Column(

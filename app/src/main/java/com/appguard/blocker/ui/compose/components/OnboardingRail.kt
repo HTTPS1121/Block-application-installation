@@ -3,6 +3,7 @@ package com.appguard.blocker.ui.compose.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -48,11 +49,12 @@ private fun StepDot(index: Int, label: String, active: Int) {
         done -> MaterialTheme.colorScheme.onTertiary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val shape = if (current) MaterialTheme.shapes.large else CircleShape
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
+                .size(32.dp)
+                .clip(shape)
                 .background(bg),
             contentAlignment = Alignment.Center
         ) {

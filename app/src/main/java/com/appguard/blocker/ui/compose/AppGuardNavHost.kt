@@ -4,14 +4,17 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -124,23 +127,38 @@ fun AppGuardNavHost(
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
             if (route in Routes.bottomBarRoutes || isSettingsRoute(route)) {
-                NavigationBar {
-                    NavigationBarItem(
+                ShortNavigationBar {
+                    ShortNavigationBarItem(
                         selected = route == Routes.HOME,
                         onClick = { navigateToHomeRoot() },
-                        icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
+                        icon = {
+                            Icon(
+                                if (route == Routes.HOME) Icons.Filled.Home else Icons.Outlined.Home,
+                                contentDescription = null
+                            )
+                        },
                         label = { Text(stringResource(R.string.nav_home)) }
                     )
-                    NavigationBarItem(
+                    ShortNavigationBarItem(
                         selected = route == Routes.ALLOWLIST,
                         onClick = { navigateToAllowlistTab() },
-                        icon = { Icon(Icons.Outlined.Apps, contentDescription = null) },
+                        icon = {
+                            Icon(
+                                if (route == Routes.ALLOWLIST) Icons.Filled.Apps else Icons.Outlined.Apps,
+                                contentDescription = null
+                            )
+                        },
                         label = { Text(stringResource(R.string.nav_allowlist)) }
                     )
-                    NavigationBarItem(
+                    ShortNavigationBarItem(
                         selected = isSettingsRoute(route),
                         onClick = { navigateToSettingsRoot() },
-                        icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
+                        icon = {
+                            Icon(
+                                if (isSettingsRoute(route)) Icons.Filled.Settings else Icons.Outlined.Settings,
+                                contentDescription = null
+                            )
+                        },
                         label = { Text(stringResource(R.string.nav_settings)) }
                     )
                 }

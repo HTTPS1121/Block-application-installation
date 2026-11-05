@@ -40,6 +40,7 @@ import com.appguard.blocker.dns.PrivateDnsEnforcer
 import com.appguard.blocker.protection.ProtectionController
 import com.appguard.blocker.protection.TamperReason
 import com.appguard.blocker.ui.compose.ui.ConsumerFormBlock
+import com.appguard.blocker.ui.compose.ui.ConsumerGroup
 import com.appguard.blocker.ui.compose.ui.ConsumerLineDivider
 import com.appguard.blocker.ui.compose.ui.ConsumerPrimaryButton
 import com.appguard.blocker.ui.compose.ui.ConsumerRow
@@ -81,77 +82,79 @@ fun SettingsRootScreen(
         ) {
             item { ConsumerSection(stringResource(R.string.settings_group_protection)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.permissions_title_settings),
-                    subtitle = if (permissionsReady) {
-                        stringResource(R.string.permissions_ready)
-                    } else {
-                        stringResource(R.string.permissions_missing)
-                    },
-                    onClick = onOpenPermissions
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_allowlist_entry),
-                    subtitle = stringResource(R.string.settings_allowlist_entry_sub),
-                    onClick = onOpenAllowlist
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_reinstall_approval_title),
-                    subtitle = stringResource(R.string.settings_reinstall_entry_sub),
-                    onClick = onOpenAllowlistPolicy
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.permissions_title_settings),
+                        subtitle = if (permissionsReady) {
+                            stringResource(R.string.permissions_ready)
+                        } else {
+                            stringResource(R.string.permissions_missing)
+                        },
+                        onClick = onOpenPermissions
+                    )
+                    ConsumerLineDivider()
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_allowlist_entry),
+                        subtitle = stringResource(R.string.settings_allowlist_entry_sub),
+                        onClick = onOpenAllowlist
+                    )
+                    ConsumerLineDivider()
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_reinstall_approval_title),
+                        subtitle = stringResource(R.string.settings_reinstall_entry_sub),
+                        onClick = onOpenAllowlistPolicy
+                    )
+                }
             }
 
             item { ConsumerSection(stringResource(R.string.settings_group_appearance)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_theme_title),
-                    subtitle = stringResource(
-                        when (prefs.appThemeMode) {
-                            AppThemeMode.LIGHT -> R.string.settings_theme_light
-                            AppThemeMode.DARK -> R.string.settings_theme_dark
-                            AppThemeMode.AMOLED -> R.string.settings_theme_amoled
-                        }
-                    ),
-                    onClick = onOpenTheme
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_theme_title),
+                        subtitle = stringResource(
+                            when (prefs.appThemeMode) {
+                                AppThemeMode.LIGHT -> R.string.settings_theme_light
+                                AppThemeMode.DARK -> R.string.settings_theme_dark
+                                AppThemeMode.AMOLED -> R.string.settings_theme_amoled
+                            }
+                        ),
+                        onClick = onOpenTheme
+                    )
+                }
             }
 
             item { ConsumerSection(stringResource(R.string.settings_group_security)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_security_hub_title),
-                    subtitle = stringResource(R.string.settings_security_hub_sub),
-                    onClick = onOpenSecurity
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_security_hub_title),
+                        subtitle = stringResource(R.string.settings_security_hub_sub),
+                        onClick = onOpenSecurity
+                    )
+                }
             }
 
             item { ConsumerSection(stringResource(R.string.settings_group_advanced)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.dns_title),
-                    subtitle = stringResource(
-                        if (dnsLocked) R.string.settings_dns_summary_locked else R.string.settings_dns_summary_open,
-                        phoneDns
-                    ),
-                    onClick = onOpenDns
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_device_entry),
-                    subtitle = stringResource(
-                        if (uninstallLocked) R.string.unlock_status_locked else R.string.unlock_status_open
-                    ),
-                    onClick = onOpenDevice
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.dns_title),
+                        subtitle = stringResource(
+                            if (dnsLocked) R.string.settings_dns_summary_locked else R.string.settings_dns_summary_open,
+                            phoneDns
+                        ),
+                        onClick = onOpenDns
+                    )
+                    ConsumerLineDivider()
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_device_entry),
+                        subtitle = stringResource(
+                            if (uninstallLocked) R.string.unlock_status_locked else R.string.unlock_status_open
+                        ),
+                        onClick = onOpenDevice
+                    )
+                }
             }
             item { Spacer(Modifier.padding(bottom = 32.dp)) }
         }
@@ -189,27 +192,29 @@ fun SettingsSecurityHubScreen(
             }
             item { ConsumerSection(stringResource(R.string.settings_security_codes_section)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.change_pin),
-                    subtitle = stringResource(R.string.settings_change_pin_sub),
-                    onClick = onOpenChangePin
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_recovery_info_title),
-                    subtitle = stringResource(R.string.settings_recovery_info_sub),
-                    onClick = null
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.change_pin),
+                        subtitle = stringResource(R.string.settings_change_pin_sub),
+                        onClick = onOpenChangePin
+                    )
+                    ConsumerLineDivider()
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_recovery_info_title),
+                        subtitle = stringResource(R.string.settings_recovery_info_sub),
+                        onClick = null
+                    )
+                }
             }
             item { ConsumerSection(stringResource(R.string.settings_security_behavior_section)) }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_lock_after_exit_title),
-                    subtitle = stringResource(R.string.settings_lock_after_exit_sub),
-                    onClick = null
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_lock_after_exit_title),
+                        subtitle = stringResource(R.string.settings_lock_after_exit_sub),
+                        onClick = null
+                    )
+                }
             }
             item { Spacer(Modifier.padding(bottom = 32.dp)) }
         }
@@ -430,18 +435,20 @@ fun SettingsAllowlistPolicyScreen(
                 )
             }
             item {
-                ConsumerRow(
-                    title = stringResource(R.string.settings_reinstall_approval_switch),
-                    trailing = {
-                        Switch(
-                            checked = rememberReinstall,
-                            onCheckedChange = {
-                                rememberReinstall = it
-                                prefs.rememberApprovalAfterReinstall = it
-                            }
-                        )
-                    }
-                )
+                ConsumerGroup {
+                    ConsumerRow(
+                        title = stringResource(R.string.settings_reinstall_approval_switch),
+                        trailing = {
+                            Switch(
+                                checked = rememberReinstall,
+                                onCheckedChange = {
+                                    rememberReinstall = it
+                                    prefs.rememberApprovalAfterReinstall = it
+                                }
+                            )
+                        }
+                    )
+                }
             }
             item { Spacer(Modifier.padding(bottom = 32.dp)) }
         }
@@ -518,14 +525,18 @@ fun SettingsDnsScreen(
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                         ) { Text(stringResource(R.string.dns_copy_adb)) }
                     }
-                    DnsModeRow(R.string.dns_mode_off, dnsMode == PrivateDns.MODE_OFF) {
-                        dnsMode = PrivateDns.MODE_OFF
-                    }
-                    DnsModeRow(R.string.dns_mode_auto, dnsMode == PrivateDns.MODE_OPPORTUNISTIC) {
-                        dnsMode = PrivateDns.MODE_OPPORTUNISTIC
-                    }
-                    DnsModeRow(R.string.dns_mode_host, dnsMode == PrivateDns.MODE_HOSTNAME) {
-                        dnsMode = PrivateDns.MODE_HOSTNAME
+                    ConsumerGroup(horizontalInset = false, modifier = Modifier.padding(vertical = 8.dp)) {
+                        DnsModeRow(R.string.dns_mode_off, dnsMode == PrivateDns.MODE_OFF) {
+                            dnsMode = PrivateDns.MODE_OFF
+                        }
+                        ConsumerLineDivider()
+                        DnsModeRow(R.string.dns_mode_auto, dnsMode == PrivateDns.MODE_OPPORTUNISTIC) {
+                            dnsMode = PrivateDns.MODE_OPPORTUNISTIC
+                        }
+                        ConsumerLineDivider()
+                        DnsModeRow(R.string.dns_mode_host, dnsMode == PrivateDns.MODE_HOSTNAME) {
+                            dnsMode = PrivateDns.MODE_HOSTNAME
+                        }
                     }
                     if (dnsMode == PrivateDns.MODE_HOSTNAME) {
                         OutlinedTextField(
@@ -729,42 +740,40 @@ fun SettingsThemeScreen(
                 )
             }
             item {
-                ThemeModeRow(
-                    title = stringResource(R.string.settings_theme_light),
-                    subtitle = stringResource(R.string.settings_theme_light_sub),
-                    selected = selected == AppThemeMode.LIGHT,
-                    onSelect = {
-                        selected = AppThemeMode.LIGHT
-                        prefs.appThemeMode = AppThemeMode.LIGHT
-                        onThemeChanged(AppThemeMode.LIGHT)
-                    }
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ThemeModeRow(
-                    title = stringResource(R.string.settings_theme_dark),
-                    subtitle = stringResource(R.string.settings_theme_dark_sub),
-                    selected = selected == AppThemeMode.DARK,
-                    onSelect = {
-                        selected = AppThemeMode.DARK
-                        prefs.appThemeMode = AppThemeMode.DARK
-                        onThemeChanged(AppThemeMode.DARK)
-                    }
-                )
-            }
-            item { ConsumerLineDivider() }
-            item {
-                ThemeModeRow(
-                    title = stringResource(R.string.settings_theme_amoled),
-                    subtitle = stringResource(R.string.settings_theme_amoled_sub),
-                    selected = selected == AppThemeMode.AMOLED,
-                    onSelect = {
-                        selected = AppThemeMode.AMOLED
-                        prefs.appThemeMode = AppThemeMode.AMOLED
-                        onThemeChanged(AppThemeMode.AMOLED)
-                    }
-                )
+                ConsumerGroup {
+                    ThemeModeRow(
+                        title = stringResource(R.string.settings_theme_light),
+                        subtitle = stringResource(R.string.settings_theme_light_sub),
+                        selected = selected == AppThemeMode.LIGHT,
+                        onSelect = {
+                            selected = AppThemeMode.LIGHT
+                            prefs.appThemeMode = AppThemeMode.LIGHT
+                            onThemeChanged(AppThemeMode.LIGHT)
+                        }
+                    )
+                    ConsumerLineDivider()
+                    ThemeModeRow(
+                        title = stringResource(R.string.settings_theme_dark),
+                        subtitle = stringResource(R.string.settings_theme_dark_sub),
+                        selected = selected == AppThemeMode.DARK,
+                        onSelect = {
+                            selected = AppThemeMode.DARK
+                            prefs.appThemeMode = AppThemeMode.DARK
+                            onThemeChanged(AppThemeMode.DARK)
+                        }
+                    )
+                    ConsumerLineDivider()
+                    ThemeModeRow(
+                        title = stringResource(R.string.settings_theme_amoled),
+                        subtitle = stringResource(R.string.settings_theme_amoled_sub),
+                        selected = selected == AppThemeMode.AMOLED,
+                        onSelect = {
+                            selected = AppThemeMode.AMOLED
+                            prefs.appThemeMode = AppThemeMode.AMOLED
+                            onThemeChanged(AppThemeMode.AMOLED)
+                        }
+                    )
+                }
             }
             item { Spacer(Modifier.padding(bottom = 32.dp)) }
         }

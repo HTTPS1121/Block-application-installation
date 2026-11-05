@@ -2,65 +2,58 @@ package com.appguard.blocker.ui.compose.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.appguard.blocker.R
 
-/** Telegram / Google Photos–style section label */
 @Composable
 fun ConsumerSection(
     title: String,
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 6.dp)
+        modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp)
     )
 }
 
 @Composable
 fun ConsumerLineDivider() {
     HorizontalDivider(
-        thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        modifier = Modifier.padding(start = 16.dp)
     )
 }
 
@@ -86,18 +79,38 @@ fun ConsumerTopBar(
         title = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.titleLarge
             )
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
 
-/** Flat list row — Telegram settings / Photos list feel */
+@Composable
+fun ConsumerGroup(
+    modifier: Modifier = Modifier,
+    horizontalInset: Boolean = true,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = if (horizontalInset) 16.dp else 0.dp,
+                vertical = 4.dp
+            ),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(content = content)
+    }
+}
+
 @Composable
 fun ConsumerRow(
     title: String,
@@ -107,13 +120,8 @@ fun ConsumerRow(
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     val clickMod = if (onClick != null) {
-        Modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClick = onClick
-        )
+        Modifier.clickable(onClick = onClick)
     } else {
         Modifier
     }
@@ -121,7 +129,7 @@ fun ConsumerRow(
         modifier = modifier
             .fillMaxWidth()
             .then(clickMod)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (leading != null) {
@@ -166,7 +174,7 @@ fun ConsumerSearchField(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(22.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
         BasicTextField(
@@ -174,7 +182,7 @@ fun ConsumerSearchField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 14.dp),
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface
             ),
@@ -204,12 +212,12 @@ fun ConsumerStatusPill(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = accent.copy(alpha = 0.15f)
+        shape = MaterialTheme.shapes.extraLargeIncreased,
+        color = accent.copy(alpha = 0.16f)
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             style = MaterialTheme.typography.titleMedium,
             color = accent
         )
@@ -220,10 +228,10 @@ fun ConsumerStatusPill(
 fun ConsumerStatusDot(active: Boolean) {
     Box(
         modifier = Modifier
-            .size(10.dp)
+            .size(12.dp)
             .clip(CircleShape)
             .background(
-                if (active) Color(0xFF31A24C) else MaterialTheme.colorScheme.error
+                if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
             )
     )
 }
@@ -241,12 +249,8 @@ fun ConsumerPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .height(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        )
+            .height(56.dp),
+        shape = MaterialTheme.shapes.extraLarge,
     ) {
         Text(text, style = MaterialTheme.typography.titleMedium)
     }
@@ -261,9 +265,9 @@ fun ConsumerFormBlock(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(Modifier.padding(16.dp), content = content)
+        Column(Modifier.padding(20.dp), content = content)
     }
 }
