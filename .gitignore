@@ -4,6 +4,7 @@
 /.idea/
 .DS_Store
 /build/
+/.build/
 /app/build/
 /captures/
 .externalNativeBuild/
@@ -21,3 +22,10 @@ refs/
 
 # Release signing key. Losing this folder blocks updates over an installed APK.
 .signing/
+
+# Local dev PIN for adb scripts (never commit).
+.local/
+
+# Cloned skill fetch dirs (skills live in .cursor/skills/)
+.cursor/_tmp_m3/
+.cursor/_tmp_md3e/
