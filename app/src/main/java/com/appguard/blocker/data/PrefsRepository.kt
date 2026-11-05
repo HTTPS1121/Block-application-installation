@@ -5,9 +5,16 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.util.Base64
+import com.appguard.blocker.ui.compose.theme.AppThemeMode
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
+
+/** Past approval kept by package id (com.example.app) — survives uninstall when enabled. */
+data class RememberedApproval(
+    val packageName: String,
+    val label: String
+)
 
 class PrefsRepository(context: Context) {
 
@@ -32,6 +39,57 @@ class PrefsRepository(context: Context) {
         val salt = Base64.decode(saltB64, Base64.NO_WRAP)
         val expected = Base64.decode(hashB64, Base64.NO_WRAP)
         return MessageDigest.isEqual(expected, hashPin(pin, salt))
+    }
+
+    /** Optional fast login (1–4 digits). Off by default; full PIN always works. */
+    var shortCodeLoginEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SHORT_CODE_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_SHORT_CODE_ENABLED, value).apply()
+
+    fun hasShortCode(): Boolean = prefs.contains(KEY_SHORT_CODE_HASH)
+
+    fun setShortCode(code: String) {
+        require(isValidShortCode(code)) { "short code must be 1–4 digits" }
+        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        val hash = hashPin(code, salt)
+        prefs.edit()
+            .putString(KEY_SHORT_CODE_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
+            .putString(KEY_SHORT_CODE_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
+            .apply()
+    }
+
+    fun clearShortCode() {
+        prefs.edit()
+            .remove(KEY_SHORT_CODE_SALT)
+            .remove(KEY_SHORT_CODE_HASH)
+            .putBoolean(KEY_SHORT_CODE_ENABLED, false)
+            .apply()
+    }
+
+    /** Dev/debug only — temporary «1» quick login; disable via clear short code in settings. */
+    var devTempShortCodeOneActive: Boolean
+        get() = prefs.getBoolean(KEY_DEV_TEMP_SHORT_ONE, true)
+        set(value) = prefs.edit().putBoolean(KEY_DEV_TEMP_SHORT_ONE, value).apply()
+
+    fun applyDevTempShortCodeOne() {
+        setShortCode("1")
+        shortCodeLoginEnabled = true
+    }
+
+    fun verifyShortCode(code: String): Boolean {
+        if (!isValidShortCode(code)) return false
+        val saltB64 = prefs.getString(KEY_SHORT_CODE_SALT, null) ?: return false
+        val hashB64 = prefs.getString(KEY_SHORT_CODE_HASH, null) ?: return false
+        val salt = Base64.decode(saltB64, Base64.NO_WRAP)
+        val expected = Base64.decode(hashB64, Base64.NO_WRAP)
+        return MessageDigest.isEqual(expected, hashPin(code, salt))
+    }
+
+    /** PinActivity login: full PIN, or short code when enabled. */
+    fun verifyForLogin(input: String): Boolean {
+        if (verifyPin(input)) return true
+        if (!shortCodeLoginEnabled || !hasShortCode()) return false
+        return verifyShortCode(input)
     }
 
     /** Returns plaintext recovery code once; stores only hash. */
@@ -66,6 +124,14 @@ class PrefsRepository(context: Context) {
     var allowlistEnabled: Boolean
         get() = prefs.getBoolean(KEY_ALLOWLIST_ENABLED, false)
         set(value) = prefs.edit().putBoolean(KEY_ALLOWLIST_ENABLED, value).apply()
+
+    /**
+     * When true (default): uninstall keeps remembered approval by package name;
+     * reinstall auto-allows without PIN. When false: uninstall clears memory — must approve again.
+     */
+    var rememberApprovalAfterReinstall: Boolean
+        get() = prefs.getBoolean(KEY_REMEMBER_AFTER_REINSTALL, true)
+        set(value) = prefs.edit().putBoolean(KEY_REMEMBER_AFTER_REINSTALL, value).apply()
 
     var uninstallUnlocked: Boolean
         get() = prefs.getBoolean(KEY_UNINSTALL_UNLOCKED, false)
@@ -138,18 +204,128 @@ class PrefsRepository(context: Context) {
         set.add(packageName)
         setAllowedPackages(set)
         clearRecentlyInstalled(packageName)
+        if (rememberApprovalAfterReinstall) {
+            rememberApproval(packageName)
+        }
     }
 
     fun blockPackages(packages: Collection<String>) {
         val set = getAllowedPackages()
         set.removeAll(packages.toSet())
         setAllowedPackages(set)
+        packages.forEach { removeRememberedApproval(it) }
     }
 
     fun isPackageAllowed(packageName: String): Boolean {
         if (isAlwaysOpen(packageName)) return true
         return getAllowedPackages().contains(packageName)
     }
+
+    /** Allowlist UI: runtime allow or remembered identity (when reinstall memory is on). */
+    fun isAllowlistApproved(packageName: String): Boolean {
+        if (isAlwaysOpen(packageName)) return true
+        if (isPackageAllowed(packageName)) return true
+        return rememberApprovalAfterReinstall && isRememberedApproval(packageName)
+    }
+
+    fun getRememberedApprovals(): List<RememberedApproval> {
+        migrateLegacyTrustStorage()
+        val raw = prefs.getStringSet(KEY_REMEMBERED_APPROVALS, emptySet()) ?: emptySet()
+        return raw.mapNotNull { parseRememberedEntry(it) }
+    }
+
+    fun isRememberedApproval(packageName: String): Boolean =
+        getRememberedApprovals().any { it.packageName == packageName }
+
+    fun rememberApproval(packageName: String) {
+        val label = runCatching {
+            appContext.packageManager.getApplicationLabel(
+                appContext.packageManager.getApplicationInfo(packageName, 0)
+            ).toString()
+        }.getOrNull()
+            ?: getRememberedApprovals().find { it.packageName == packageName }?.label
+            ?: packageName
+        addRememberedApproval(RememberedApproval(packageName, label))
+    }
+
+    fun addRememberedApproval(entry: RememberedApproval) {
+        val set = prefs.getStringSet(KEY_REMEMBERED_APPROVALS, emptySet())?.toMutableSet()
+            ?: mutableSetOf()
+        set.removeAll { raw -> parseRememberedEntry(raw)?.packageName == entry.packageName }
+        set.add(encodeRememberedEntry(entry))
+        prefs.edit().putStringSet(KEY_REMEMBERED_APPROVALS, set).apply()
+    }
+
+    fun removeRememberedApproval(packageName: String) {
+        val set = prefs.getStringSet(KEY_REMEMBERED_APPROVALS, emptySet())?.toMutableSet()
+            ?: return
+        val before = set.size
+        set.removeAll { raw -> parseRememberedEntry(raw)?.packageName == packageName }
+        if (set.size != before) {
+            prefs.edit().putStringSet(KEY_REMEMBERED_APPROVALS, set).apply()
+        }
+    }
+
+    fun getRememberedNotInstalled(): List<RememberedApproval> {
+        val installed = runCatching {
+            appContext.packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+                .map { it.packageName }
+                .toSet()
+        }.getOrDefault(emptySet())
+        return getRememberedApprovals()
+            .filter { it.packageName !in installed }
+            .sortedBy { it.label.lowercase() }
+    }
+
+    /** One-time: seed memory from current runtime allowlist. */
+    fun migrateAllowedPackagesToRemembered() {
+        if (!rememberApprovalAfterReinstall) return
+        for (pkg in getAllowedPackages()) {
+            if (isAlwaysOpen(pkg)) continue
+            rememberApproval(pkg)
+        }
+    }
+
+    fun countApprovedIdentities(): Int {
+        val pkgs = getAllowedPackages().toMutableSet()
+        pkgs.addAll(getRememberedApprovals().map { it.packageName })
+        return pkgs.size
+    }
+
+    private fun migrateLegacyTrustStorage() {
+        if (prefs.getBoolean(KEY_LEGACY_TRUST_MIGRATED, false)) return
+        val legacy = prefs.getStringSet(KEY_TRUSTED_SIGNATURES, emptySet()) ?: emptySet()
+        for (raw in legacy) {
+            val parts = raw.split('|', limit = 3)
+            if (parts.isEmpty()) continue
+            val pkg = parts[0]
+            if (pkg.isBlank() || isAlwaysOpen(pkg)) continue
+            val label = parts.getOrElse(2) { pkg }.ifBlank { pkg }
+            addRememberedApproval(RememberedApproval(pkg, label))
+        }
+        prefs.edit()
+            .remove(KEY_TRUSTED_SIGNATURES)
+            .putBoolean(KEY_LEGACY_TRUST_MIGRATED, true)
+            .apply()
+    }
+
+    private fun encodeRememberedEntry(entry: RememberedApproval): String =
+        "${entry.packageName}|${entry.label.replace('|', ' ')}"
+
+    private fun parseRememberedEntry(raw: String): RememberedApproval? {
+        val parts = raw.split('|', limit = 2)
+        if (parts.isEmpty()) return null
+        val pkg = parts[0]
+        if (pkg.isBlank()) return null
+        val label = parts.getOrElse(1) { pkg }.ifBlank { pkg }
+        return RememberedApproval(pkg, label)
+    }
+
+    fun isPackageInstalled(packageName: String): Boolean =
+        runCatching {
+            appContext.packageManager.getApplicationInfo(packageName, 0)
+            true
+        }.getOrDefault(false)
 
     /**
      * Always open — no allowlist needed:
@@ -211,7 +387,7 @@ class PrefsRepository(context: Context) {
     fun shouldBlockPackage(packageName: String): Boolean {
         if (isAlwaysOpen(packageName)) return false
         if (!allowlistEnabled) return false
-        return !getAllowedPackages().contains(packageName)
+        return !isPackageAllowed(packageName)
     }
 
     fun protectionActive(): Boolean = allowlistEnabled
@@ -262,6 +438,12 @@ class PrefsRepository(context: Context) {
             .sortedBy { it.second.lowercase() }
     }
 
+    var appThemeMode: AppThemeMode
+        get() = AppThemeMode.fromStorage(prefs.getString(KEY_THEME_MODE, null))
+        set(value) {
+            prefs.edit().putString(KEY_THEME_MODE, value.storageKey).commit()
+        }
+
     var setupCompleted: Boolean
         get() = prefs.getBoolean(KEY_SETUP_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_SETUP_COMPLETED, value).apply()
@@ -308,18 +490,33 @@ class PrefsRepository(context: Context) {
         return digest.digest()
     }
 
+    private fun isValidShortCode(code: String): Boolean =
+        code.length in MIN_SHORT_CODE_LENGTH..MAX_SHORT_CODE_LENGTH &&
+            code.all { it.isDigit() }
+
     companion object {
+        const val MIN_SHORT_CODE_LENGTH = 1
+        const val MAX_SHORT_CODE_LENGTH = 4
         private const val PREFS_NAME = "app_guard_prefs"
         private const val KEY_PIN_SALT = "pin_salt"
         private const val KEY_PIN_HASH = "pin_hash"
+        private const val KEY_SHORT_CODE_ENABLED = "short_code_login_enabled"
+        private const val KEY_SHORT_CODE_SALT = "short_code_salt"
+        private const val KEY_SHORT_CODE_HASH = "short_code_hash"
+        private const val KEY_DEV_TEMP_SHORT_ONE = "dev_temp_short_code_one"
         private const val KEY_RECOVERY_SALT = "recovery_salt"
         private const val KEY_RECOVERY_HASH = "recovery_hash"
         private const val KEY_RECOVERY_SHOWN = "recovery_shown"
         private const val KEY_ALLOWLIST_ENABLED = "allowlist_enabled"
         private const val KEY_UNINSTALL_UNLOCKED = "uninstall_unlocked"
         private const val KEY_ALLOWED_PACKAGES = "allowed_packages"
+        private const val KEY_REMEMBERED_APPROVALS = "remembered_approvals_v1"
+        private const val KEY_REMEMBER_AFTER_REINSTALL = "remember_approval_after_reinstall"
+        private const val KEY_TRUSTED_SIGNATURES = "trusted_signatures_v1"
+        private const val KEY_LEGACY_TRUST_MIGRATED = "legacy_trust_migrated"
         private const val KEY_RECENT_INSTALLS = "recent_installs"
         private const val KEY_SETUP_COMPLETED = "setup_completed"
+        private const val KEY_THEME_MODE = "theme_mode_v1"
         private const val KEY_PROTECTION_ARMED = "protection_armed"
         private const val KEY_LAST_VERSION = "last_seen_version_code"
         private const val KEY_CHALLENGE_ACTIVE = "challenge_active"

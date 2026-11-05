@@ -8,8 +8,8 @@ import com.appguard.blocker.R
 import com.appguard.blocker.data.PrefsRepository
 
 /**
- * New installs are never auto-added to the allowlist.
- * If protection is on they simply can't open until marked allowed — no "pending" state.
+ * Fresh installs are blocked unless the package id was approved before and
+ * [PrefsRepository.rememberApprovalAfterReinstall] is on — then reopen without PIN.
  */
 class PackageChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -25,10 +25,13 @@ class PackageChangeReceiver : BroadcastReceiver() {
         when (action) {
             Intent.ACTION_PACKAGE_ADDED -> {
                 if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-                // System packages are always open — no toast / no allowlist noise
                 if (prefs.isAlwaysOpen(pkg)) return
 
-                // Ensure new package is not on allowlist
+                if (prefs.rememberApprovalAfterReinstall && prefs.isRememberedApproval(pkg)) {
+                    prefs.allowPackage(pkg)
+                    return
+                }
+
                 val allowed = prefs.getAllowedPackages()
                 if (allowed.remove(pkg)) {
                     prefs.setAllowedPackages(allowed)
@@ -45,10 +48,18 @@ class PackageChangeReceiver : BroadcastReceiver() {
             Intent.ACTION_PACKAGE_REMOVED -> {
                 if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
                 val allowed = prefs.getAllowedPackages()
+                val wasAllowed = allowed.contains(pkg)
                 if (allowed.remove(pkg)) {
                     prefs.setAllowedPackages(allowed)
                 }
                 prefs.clearRecentlyInstalled(pkg)
+                val keep = prefs.rememberApprovalAfterReinstall &&
+                    (wasAllowed || prefs.isRememberedApproval(pkg))
+                if (keep) {
+                    prefs.rememberApproval(pkg)
+                } else {
+                    prefs.removeRememberedApproval(pkg)
+                }
             }
         }
     }
